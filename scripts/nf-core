@@ -8,7 +8,7 @@ import sys
 import os
 
 import nf_core
-import nf_core.lint, nf_core.list, nf_core.download, nf_core.release
+import nf_core.lint, nf_core.list, nf_core.download, nf_core.install, nf_core.release
 
 import logging
 
@@ -83,6 +83,17 @@ def download(pipeline, release, singularity, outdir):
     """ Download a pipeline and singularity container """
     dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir)
     dl.download_workflow()
+
+@nf_core_cli.command()
+@click.argument(
+    'tools',
+    required = True,
+    type=click.Choice(['nextflow', 'singularity']),
+    metavar = "<tool names>"
+)
+def install(tools):
+    """ Install required software (nextflow, singularity) """
+    nf_core.install.install_tools(tools)
 
 @nf_core_cli.command()
 @click.argument(
