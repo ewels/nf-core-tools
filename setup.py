@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
+import sys
 
-version = '1.1dev'
+version = '1.4'
 
 with open('README.md') as f:
     readme = f.read()
 
 with open('LICENSE') as f:
     license = f.read()
-
-with open('requirements.txt') as f:
-    required = f.read().splitlines()
 
 setup(
     name = 'nf-core',
@@ -25,7 +23,20 @@ setup(
     url = 'https://github.com/nf-core/tools',
     license = license,
     scripts = ['scripts/nf-core'],
-    install_requires = required,
+    install_requires = [
+        'cookiecutter',
+        'click',
+        'GitPython',
+        'jsonschema',
+        'pyyaml',
+        'requests',
+        'requests_cache',
+        'tabulate'
+    ],
+    setup_requires=[
+        'twine>=1.11.0',
+        'setuptools>=38.6.'
+    ],
     packages = find_packages(exclude=('docs')),
     include_package_data = True,
     zip_safe = False

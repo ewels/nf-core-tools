@@ -6,9 +6,14 @@ from __future__ import print_function
 import click
 import sys
 import os
+import re
 
 import nf_core
+<<<<<<< HEAD
 import nf_core.lint, nf_core.list, nf_core.download, nf_core.install, nf_core.release
+=======
+import nf_core.bump_version, nf_core.create, nf_core.download, nf_core.launch, nf_core.licences, nf_core.lint, nf_core.list
+>>>>>>> master
 
 import logging
 
@@ -17,6 +22,7 @@ import logging
 @click.option(
     '-v', '--verbose',
     is_flag = True,
+    default = False,
     help = "Verbose output (print debug statements)"
 )
 def nf_core_cli(verbose):
@@ -35,7 +41,7 @@ def nf_core_cli(verbose):
 @click.option(
     '--release',
     is_flag = True,
-    default = os.environ.get('TRAVIS_BRANCH') == 'master' and os.environ.get('TRAVIS_REPO_SLUG', '').startswith('nf-core/'),
+    default = os.environ.get('TRAVIS_BRANCH') == 'master' and os.environ.get('TRAVIS_REPO_SLUG', '').startswith('nf-core/') and not os.environ.get('TRAVIS_REPO_SLUG', '') == 'nf-core/tools',
     help = "Execute additional checks for release-ready workflows."
 )
 def lint(pipeline_dir, release):
@@ -47,15 +53,45 @@ def lint(pipeline_dir, release):
         sys.exit(1)
 
 @nf_core_cli.command()
+@click.argument(
+    'keywords',
+    required = False,
+    nargs = -1,
+    metavar = "<filter keywords>"
+)
+@click.option(
+    '-s', '--sort',
+    type = click.Choice(['release', 'name', 'stars']),
+    default = 'release',
+    help = "How to sort listed pipelines"
+)
 @click.option(
     '--json',
     is_flag = True,
     default = False,
     help = "Print full output as JSON"
 )
-def list(json):
+def list(sort, json, keywords):
     """ List nf-core pipelines with local info """
-    nf_core.list.list_workflows(json)
+    nf_core.list.list_workflows(sort, json, keywords)
+
+@nf_core_cli.command()
+@click.argument(
+    'pipeline',
+    required = True,
+    metavar = "<pipeline name>"
+)
+@click.option(
+    '--json',
+    is_flag = True,
+    default = False,
+    help = "Print output in JSON"
+)
+def licences(pipeline, json):
+    """ List software licences for a given workflow """
+    lic = nf_core.licences.WorkflowLicences(pipeline)
+    lic.fetch_conda_licences()
+    lic.print_licences(as_json=json)
 
 @nf_core_cli.command()
 @click.argument(
@@ -86,6 +122,7 @@ def download(pipeline, release, singularity, outdir):
 
 @nf_core_cli.command()
 @click.argument(
+<<<<<<< HEAD
     'tools',
     required = True,
     type=click.Choice(['nextflow', 'singularity']),
@@ -96,6 +133,27 @@ def install(tools):
     nf_core.install.install_tools(tools)
 
 @nf_core_cli.command()
+=======
+    'pipeline',
+    required = True,
+    metavar = "<pipeline name>"
+)
+@click.option(
+    '-p', '--params',
+    type = str,
+    help = "Local parameter settings file in JSON."
+)
+@click.option(
+    '-d', '--direct',
+    is_flag = True,
+    help = "Uses given values from the parameter file directly."
+)
+def launch(pipeline, params, direct):
+    """ Interactively build a nextflow command and launch a pipeline """
+    nf_core.launch.launch_pipeline(pipeline, params, direct)
+
+@nf_core_cli.command('bump-version')
+>>>>>>> master
 @click.argument(
     'pipeline_dir',
     type = click.Path(exists=True),
@@ -105,24 +163,94 @@ def install(tools):
 @click.argument(
     'new_version',
     required = True,
-    metavar = "<new version number>"
+    metavar = "<new version>"
 )
-def release(pipeline_dir, new_version):
+@click.option(
+    '-n', '--nextflow',
+    is_flag = True,
+    default = False,
+    help = "Bump required nextflow version instead of pipeline version"
+)
+def bump_version(pipeline_dir, new_version, nextflow):
     """ Update nf-core pipeline version number """
 
     # First, lint the pipeline to check everything is in order
     logging.info("Running nf-core lint tests")
     lint_obj = nf_core.lint.run_linting(pipeline_dir, False)
+    if len(lint_obj.failed) > 0:
+        logging.error("Please fix lint errors before bumping versions")
+        return
 
-    # Bump the version number in relevant files
-    nf_core.release.make_release(lint_obj, new_version)
+    # Bump the pipeline version number
+    if not nextflow:
+        nf_core.bump_version.bump_pipeline_version(lint_obj, new_version)
+    else:
+        nf_core.bump_version.bump_nextflow_version(lint_obj, new_version)
+
+def validate_wf_name_prompt(ctx, opts, value):
+    """ Force the workflow name to meet the nf-core requirements """
+    if not re.match(r'^[a-z]+$', value):
+        click.echo('Invalid workflow name: must be lowercase without punctuation.')
+        value = click.prompt(opts.prompt)
+        return validate_wf_name_prompt(ctx, opts, value)
+    return value
+
+@nf_core_cli.command()
+@click.option(
+    '-n', '--name',
+    prompt = 'Workflow Name',
+    required = True,
+    callback = validate_wf_name_prompt,
+    type = str,
+    help = 'The name of your new pipeline'
+)
+@click.option(
+    '-d', '--description',
+    prompt = True,
+    required = True,
+    type = str,
+    help = 'A short description of your pipeline'
+)
+@click.option(
+    '-a', '--author',
+    prompt = True,
+    required = True,
+    type = str,
+    help = 'Name of the main author(s)'
+)
+@click.option(
+    '--new-version',
+    type = str,
+    default = '1.0dev',
+    help = 'The initial version number to use'
+)
+@click.option(
+    '--no-git',
+    is_flag = True,
+    default = False,
+    help = "Do not initialise pipeline as new git repository"
+)
+@click.option(
+    '-f', '--force',
+    is_flag = True,
+    default = False,
+    help = "Overwrite output directory if it already exists"
+)
+@click.option(
+    '-o', '--outdir',
+    type = str,
+    help = "Output directory for new pipeline (default: pipeline name)"
+)
+def create(name, description, author, new_version, no_git, force, outdir):
+    """ Create a new pipeline using the template """
+    create_obj = nf_core.create.PipelineCreate(name, description, author, new_version, no_git, force, outdir)
+    create_obj.init_pipeline()
+
 
 if __name__ == '__main__':
-    print("""
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-    """, file=sys.stderr)
+    click.echo(click.style("\n                                          ,--.", fg='green')+click.style("/",fg='black')+click.style(",-.", fg='green'))
+    click.echo(click.style("          ___     __   __   __   ___     ", fg='blue')+click.style("/,-._.--~\\", fg='green'))
+    click.echo(click.style("    |\ | |__  __ /  ` /  \ |__) |__      ", fg='blue')+click.style("   }  {", fg='yellow'))
+    click.echo(click.style("    | \| |       \__, \__/ |  \ |___     ", fg='blue')+click.style("\`-._,-`-,", fg='green'))
+    click.secho("                                          `._,._,'\n", fg='green')
     nf_core_cli()
