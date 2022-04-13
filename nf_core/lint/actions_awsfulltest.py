@@ -26,11 +26,20 @@ def actions_awsfulltest(self):
     * Must be turned on for ``release`` with ``types: [published]``
     * Should run the profile ``test_full`` that should be edited to provide the links to full-size datasets. If it runs the profile ``test``, a warning is given.
     """
+
+
+
+
+    # foo
+
+
+
+
     passed = []
     warned = []
     failed = []
 
-    fn = os.path.join(self.wf_path, ".github", "workflows", "awsfulltest.yml")
+    fn = os.path.join(self.wf_path, '.github', "workflows", "awsfulltest.yml")
     if os.path.isfile(fn):
         try:
             with open(fn, "r") as fh:
