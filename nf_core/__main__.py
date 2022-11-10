@@ -9,6 +9,7 @@ import rich.console
 import rich.logging
 import rich.traceback
 import rich_click as click
+from rich_pixels import Pixels
 
 import nf_core
 import nf_core.bump_version
@@ -99,6 +100,8 @@ def run_nf_core():
     except Exception as e:
         log.debug(f"Could not check latest version: {e}")
     stderr.print("\n")
+    pixels = Pixels.from_image_path("/Users/ewels/Desktop/nf-core-logo-square.png")
+    stderr.print(pixels)
 
     # Launch the click cli
     nf_core_cli(auto_envvar_prefix="NFCORE")
