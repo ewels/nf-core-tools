@@ -4,6 +4,8 @@
 
 ### General
 
+- bump to 3.6.0dev ([#4024](https://github.com/nf-core/tools/pull/4024))
+
 ### Linting
 
 ### Modules
