@@ -14,6 +14,8 @@
 
 ### Subworkflows
 
+- update test to new upstream subworkflow structure ([#4038](https://github.com/nf-core/tools/pull/4038))
+
 ### Pipeline template
 
 #### Version updates
