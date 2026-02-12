@@ -56,15 +56,13 @@ jobs:
           enable-cache: true
           
       - name: Install nf-core/tools
-        run: |
-          cd nf-core-tools
-          uv sync
+        run: uv sync --project nf-core-tools
 
       - name: Create new pipeline
-        run: uv run nf-core pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+        run: uv run --project nf-core-tools nf-core pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
 
       - name: Run new pipeline
-        run: nextflow run nf-core-testpipeline -profile docker,test --outdir ./results
+        run: nextflow run nf-core-tools/nf-core-testpipeline -profile docker,test --outdir ./results
 
       - name: Send email on failure
         if: failure()
