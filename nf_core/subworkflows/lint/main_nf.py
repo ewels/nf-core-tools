@@ -107,7 +107,7 @@ def main_nf(_, subworkflow: NFCoreComponent) -> tuple[list[str], list[str]]:
                 (
                     "main_nf",
                     "main_nf_version_emitted",
-                    "Subworkflow does not emit software version",
+                    "Subworkflow does not emit software version. Can be ignored if the subworkflow is using topic channels",
                     subworkflow.main_nf,
                 )
             )
