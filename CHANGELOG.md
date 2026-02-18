@@ -23,6 +23,8 @@
 
 ### Pipeline template
 
+- Replace webhook notifications (hook_url, slackreport, adaptivecard) with nf-slack plugin ([#4051](https://github.com/nf-core/tools/pull/4051))
+
 #### Version updates
 
 - Update apptainer setup action version ([#4036](https://github.com/nf-core/tools/pull/4036))
