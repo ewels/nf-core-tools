@@ -7,6 +7,9 @@
 - Lock file maintenance ([#4044](https://github.com/nf-core/tools/pull/4044))
 - Lock file maintenance ([#4045](https://github.com/nf-core/tools/pull/4045))
 - Update actions/stale digest to b5d41d4 ([#4047](https://github.com/nf-core/tools/pull/4047))
+- hinder renovate from updating packages with a fixed range ([#4058](https://github.com/nf-core/tools/pull/4058))
+- Update actions/upload-artifact action to v7 ([#4061](https://github.com/nf-core/tools/pull/4061))
+- allow harshil alignment™ in version channels ([#4064](https://github.com/nf-core/tools/pull/4064))
 
 ### Linting
 
@@ -23,7 +26,10 @@
 
 ### Pipeline template
 
-- Replace webhook notifications (hook_url, slackreport, adaptivecard) with nf-slack plugin ([#4051](https://github.com/nf-core/tools/pull/4051))
+- Remove webhook notifications (hook_url, slackreport, adaptivecard) ([#4051](https://github.com/nf-core/tools/pull/4051)).
+  - Use specific nextflow plugins instead:
+    - [nf-slack](https://github.com/seqeralabs/nf-slack)
+    - [nf-teams](https://github.com/nvnieuwk/nf-teams)
 
 #### Version updates
 
