@@ -26,6 +26,11 @@
 
 ### Pipeline template
 
+- Remove webhook notifications (hook_url, slackreport, adaptivecard) ([#4051](https://github.com/nf-core/tools/pull/4051)).
+  - Use specific nextflow plugins instead:
+    - [nf-slack](https://github.com/seqeralabs/nf-slack)
+    - [nf-teams](https://github.com/nvnieuwk/nf-teams)
+
 #### Version updates
 
 - Update apptainer setup action version ([#4036](https://github.com/nf-core/tools/pull/4036))
