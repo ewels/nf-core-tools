@@ -18,6 +18,7 @@
 ### Modules
 
 - Template: have a `main:` section in workflow even when modules are skipped ([#4043](https://github.com/nf-core/tools/pull/4043))
+- Always prettify modules.json ([#4063](https://github.com/nf-core/tools/pull/4063))
 
 ### Subworkflows
 
