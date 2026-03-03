@@ -35,6 +35,7 @@
   - Use specific nextflow plugins instead:
     - [nf-slack](https://github.com/seqeralabs/nf-slack)
     - [nf-teams](https://github.com/nvnieuwk/nf-teams)
+- Add `.lineage/` directory to the template .gitignore ([#4075](https://github.com/nf-core/tools/pull/4075)).
 
 #### Version updates
 
