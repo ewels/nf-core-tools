@@ -13,9 +13,7 @@ from ..utils import mock_biotools_api_calls
 def test_get_components_to_install_full_path_subworkflow(tmp_path):
     """Full-path includes pointing to subworkflows should preserve underscores."""
     main_nf = tmp_path / "main.nf"
-    main_nf.write_text(
-        "include { VCF_GATHER_BCFTOOLS } from '../../../subworkflows/nf-core/vcf_gather_bcftools'\n"
-    )
+    main_nf.write_text("include { VCF_GATHER_BCFTOOLS } from '../../../subworkflows/nf-core/vcf_gather_bcftools'\n")
     modules, subworkflows = nf_core.components.components_utils.get_components_to_install(tmp_path)
     assert len(subworkflows) == 1
     assert subworkflows[0]["name"] == "vcf_gather_bcftools"
@@ -25,9 +23,7 @@ def test_get_components_to_install_full_path_subworkflow(tmp_path):
 def test_get_components_to_install_full_path_module(tmp_path):
     """Full-path includes pointing to modules should convert underscores to slashes."""
     main_nf = tmp_path / "main.nf"
-    main_nf.write_text(
-        "include { SAMTOOLS_SORT } from '../../../modules/nf-core/samtools/sort'\n"
-    )
+    main_nf.write_text("include { SAMTOOLS_SORT } from '../../../modules/nf-core/samtools/sort'\n")
     modules, subworkflows = nf_core.components.components_utils.get_components_to_install(tmp_path)
     assert len(modules) == 1
     assert modules[0]["name"] == "samtools/sort"
@@ -37,9 +33,7 @@ def test_get_components_to_install_full_path_module(tmp_path):
 def test_get_components_to_install_relative_subworkflow(tmp_path):
     """Relative includes (../) should be treated as subworkflows with underscores preserved."""
     main_nf = tmp_path / "main.nf"
-    main_nf.write_text(
-        "include { VCF_GATHER_BCFTOOLS } from '../vcf_gather_bcftools'\n"
-    )
+    main_nf.write_text("include { VCF_GATHER_BCFTOOLS } from '../vcf_gather_bcftools'\n")
     modules, subworkflows = nf_core.components.components_utils.get_components_to_install(tmp_path)
     assert len(subworkflows) == 1
     assert subworkflows[0]["name"] == "vcf_gather_bcftools"
