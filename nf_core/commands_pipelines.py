@@ -107,6 +107,7 @@ def pipelines_lint(
     markdown,
     json,
     sort_by,
+    plain_text,
 ):
     """
     Check pipeline code against nf-core guidelines.
@@ -142,6 +143,7 @@ def pipelines_lint(
             markdown,
             json,
             ctx.obj["hide_progress"],
+            plain_text,
         )
         swf_failed = 0
         module_failed = 0
@@ -306,7 +308,9 @@ def pipelines_rocrate(
 
 
 # nf-core pipelines sync
-def pipelines_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
+def pipelines_sync(
+    ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
+):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
@@ -327,7 +331,7 @@ def pipelines_sync(ctx, directory, from_branch, pull_request, github_repository,
         is_pipeline_directory(directory)
         # Sync the given pipeline dir
         sync_obj = PipelineSync(
-            directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr
+            directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
         )
         sync_obj.sync()
     except (SyncExceptionError, PullRequestExceptionError) as e:

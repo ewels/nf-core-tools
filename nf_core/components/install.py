@@ -132,6 +132,9 @@ class ComponentInstall(ComponentCommand):
             )
             modules_json.load()
             modules_json.update(self.component_type, self.modules_repo, component, current_version, self.installed_by)
+            if not silent:
+                modules_json.load()
+                modules_json.dump(run_prettier=True)
             return False
         try:
             version = self.get_version(component, self.current_sha, self.prompt, current_version, self.modules_repo)
@@ -194,6 +197,7 @@ class ComponentInstall(ComponentCommand):
         """
         Install included modules and subworkflows
         """
+        ini_modules_repo = self.modules_repo
         modules_to_install, subworkflows_to_install = get_components_to_install(subworkflow_dir)
         for s_install in subworkflows_to_install:
             original_installed = self.installed_by
@@ -208,6 +212,8 @@ class ComponentInstall(ComponentCommand):
             self.install(m_install, silent=True)
             self.component_type = original_component_type
             self.installed_by = original_installed
+        # self.install will have modified self.modules_repo. Restore its original value
+        self.modules_repo = ini_modules_repo
 
     def collect_and_verify_name(
         self, component: str | None, modules_repo: "nf_core.modules.modules_repo.ModulesRepo"
