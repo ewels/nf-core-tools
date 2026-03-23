@@ -79,8 +79,9 @@ class TestModulesCreate(TestModules):
             os.path.join(self.nfcore_modules, "modules", "nf-core", "star", "index", "tests", "main.nf.test")
         )
 
+    @mock.patch("nf_core.utils.is_interactive", return_value=True)
     @mock.patch("rich.prompt.Confirm.ask")
-    def test_modules_migrate(self, mock_rich_ask):
+    def test_modules_migrate(self, mock_rich_ask, mock_interactive):
         """Create a module with the --migrate-pytest option to convert pytest to nf-test"""
         pytest_dir = Path(self.nfcore_modules, "tests", "modules", "nf-core", "samtools", "sort")
         module_dir = Path(self.nfcore_modules, "modules", "nf-core", "samtools", "sort")
@@ -140,8 +141,9 @@ class TestModulesCreate(TestModules):
             modules_yml = yaml.safe_load(fh)
         assert "samtools/sort" not in modules_yml.keys()
 
+    @mock.patch("nf_core.utils.is_interactive", return_value=True)
     @mock.patch("rich.prompt.Confirm.ask")
-    def test_modules_migrate_symlink(self, mock_rich_ask):
+    def test_modules_migrate_symlink(self, mock_rich_ask, mock_interactive):
         """Create a module with the --migrate-pytest option to convert pytest with symlinks to nf-test.
         Test that the symlink is deleted and the file is copied."""
 

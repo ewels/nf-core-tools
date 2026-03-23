@@ -43,8 +43,9 @@ class TestSubworkflowsCreate(TestSubworkflows):
             self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test"
         ).exists()
 
+    @mock.patch("nf_core.utils.is_interactive", return_value=True)
     @mock.patch("rich.prompt.Confirm.ask")
-    def test_subworkflows_migrate(self, mock_rich_ask):
+    def test_subworkflows_migrate(self, mock_rich_ask, mock_interactive):
         """Create a subworkflow with the --migrate-pytest option to convert pytest to nf-test"""
         pytest_dir = Path(self.nfcore_modules, "tests", "subworkflows", "nf-core", "bam_stats_samtools")
         subworkflow_dir = Path(self.nfcore_modules, "subworkflows", "nf-core", "bam_stats_samtools")

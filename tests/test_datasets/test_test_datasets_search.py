@@ -1,4 +1,5 @@
 import unittest
+from unittest import mock
 
 import responses
 
@@ -80,7 +81,8 @@ class TestTestDatasetsSearch1(unittest.TestCase):
             # be shown and the function is expected to terminate normally.
             self.assertIsNone(search_datasets(maybe_branch=branch, query=query))
 
-    def test_search_without_query(self):
+    @mock.patch("nf_core.utils.is_interactive", return_value=True)
+    def test_search_without_query(self, mock_interactive):
         with responses.RequestsMock() as rsps:
             branch = MODULES_BRANCH_NAME
             query = None

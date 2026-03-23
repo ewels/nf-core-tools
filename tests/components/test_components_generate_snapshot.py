@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
@@ -14,7 +15,8 @@ from ..utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 
 
 class TestTestComponentsUtils(TestComponents):
-    def test_unstable_snapshot(self):
+    @mock.patch("nf_core.utils.is_interactive", return_value=True)
+    def test_unstable_snapshot(self, mock_interactive):
         """Generate the snapshot for a module in nf-core/modules clone with unstable snapshots"""
         with set_wd(self.nfcore_modules):
             snap_generator = ComponentsTest(

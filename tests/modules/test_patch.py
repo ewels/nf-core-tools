@@ -357,7 +357,10 @@ class TestModulesCreate(TestModules):
             "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
         )
 
-        with mock.patch.object(nf_core.components.patch.questionary, "confirm") as mock_questionary:
+        with (
+            mock.patch.object(nf_core.components.patch.questionary, "confirm") as mock_questionary,
+            mock.patch("nf_core.utils.is_interactive", return_value=True),
+        ):
             mock_questionary.unsafe_ask.return_value = True
             patch_obj.remove(BISMARK_ALIGN)
         # Check that the diff file has been removed
