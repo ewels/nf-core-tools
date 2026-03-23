@@ -5,6 +5,7 @@ from pathlib import Path
 
 import rich
 
+import nf_core.utils
 from nf_core.pipelines.params_file import ParamsFileBuilder
 from nf_core.utils import rich_force_colors
 
@@ -53,6 +54,12 @@ def pipelines_create(ctx, name, description, author, version, force, outdir, tem
         )
         sys.exit(1)
     else:
+        if not nf_core.utils.is_interactive():
+            log.error(
+                "No pipeline arguments provided and session is not interactive (no TTY detected).\n"
+                "Please provide at least --name, --description, and --author to run non-interactively."
+            )
+            sys.exit(1)
         log.info("Launching interactive nf-core pipeline creation tool.")
         app = PipelineCreateApp()
         app.run()
