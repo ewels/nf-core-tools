@@ -50,13 +50,16 @@ jobs:
           chmod +x $HOME/.local/bin/nextflow
           nextflow -version
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7
+        with:
+          enable-cache: true
+
       - name: Install nf-core/tools
-        run: |
-          cd nf-core-tools
-          uv sync
+        run: uv sync --project nf-core-tools
 
       - name: Create new pipeline
-        run: uv run nf-core pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+        run: uv run --project nf-core-tools nf-core pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
 
       - name: Run new pipeline
         run: nextflow run nf-core-testpipeline -profile docker,test --outdir ./results
