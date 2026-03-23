@@ -223,12 +223,11 @@ class ComponentInstall(ComponentCommand):
         Check that the supplied name is an available module/subworkflow.
         """
         if component is None:
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    f"No {self.component_type[:-1]} name provided and session is not interactive (no TTY detected).\n"
-                    f"Please provide the {self.component_type[:-1]} name as a command-line argument:\n"
-                    f"  nf-core {self.component_type} install <name>"
-                )
+            nf_core.utils.require_interactive(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument:\n"
+                f"  nf-core {self.component_type} install <name>"
+            )
             component = questionary.autocomplete(
                 f"{'Tool' if self.component_type == 'modules' else 'Subworkflow'} name:",
                 choices=sorted(modules_repo.get_avail_components(self.component_type, commit=self.current_sha)),
@@ -280,12 +279,11 @@ class ComponentInstall(ComponentCommand):
                 log.info(f"{self.component_type[:-1].title()} '{component}' is already installed.")
 
             if prompt:
-                if not nf_core.utils.is_interactive():
-                    raise UserWarning(
-                        f"{self.component_type[:-1].title()} '{component}' is already installed and '--prompt' "
-                        "cannot be used in a non-interactive session (no TTY detected).\n"
-                        "Use '--force' to force reinstallation in headless environments."
-                    )
+                nf_core.utils.require_interactive(
+                    f"{self.component_type[:-1].title()} '{component}' is already installed and '--prompt' "
+                    "cannot be used.\n"
+                    "Use '--force' to force reinstallation in headless environments."
+                )
                 message = (
                     "?" if self.component_type == "modules" else " of this subworkflow and all it's imported modules?"
                 )
@@ -316,13 +314,11 @@ class ComponentInstall(ComponentCommand):
         if sha:
             version = sha
         elif prompt:
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    f"Cannot interactively select a version for '{component}' in a non-interactive session "
-                    "(no TTY detected).\n"
-                    "Please specify the version using the '--sha' option:\n"
-                    f"  nf-core {self.component_type} install --sha <commit_sha> {component}"
-                )
+            nf_core.utils.require_interactive(
+                f"Cannot interactively select a version for '{component}'.\n"
+                "Please specify the version using the '--sha' option:\n"
+                f"  nf-core {self.component_type} install --sha <commit_sha> {component}"
+            )
             try:
                 version = prompt_component_version_sha(
                     component,

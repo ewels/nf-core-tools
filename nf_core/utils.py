@@ -93,6 +93,18 @@ def is_interactive() -> bool:
     return sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()
 
 
+def require_interactive(msg: str) -> None:
+    """Raise UserWarning if the session is not interactive (no TTY).
+
+    Args:
+        msg: Description of what cannot be done, e.g.
+             "No module name provided" or "Cannot select version interactively".
+             The non-interactive explanation and "(no TTY detected)" suffix are appended automatically.
+    """
+    if not is_interactive():
+        raise UserWarning(f"{msg} and session is not interactive (no TTY detected).")
+
+
 NFCORE_CACHE_DIR = Path(
     os.environ.get("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
     "nfcore",
@@ -1034,11 +1046,7 @@ def prompt_remote_pipeline_name(wfs):
         AssertionError, if pipeline cannot be found
     """
 
-    if not is_interactive():
-        raise AssertionError(
-            "No pipeline name provided and session is not interactive (no TTY detected).\n"
-            "Please provide the pipeline name as a command-line argument."
-        )
+    require_interactive("No pipeline name provided.\nPlease provide the pipeline name as a command-line argument.")
     pipeline = questionary.autocomplete(
         "Pipeline name:",
         choices=[wf.name for wf in wfs.remote_workflows],
@@ -1103,11 +1111,7 @@ def prompt_pipeline_release_branch(
     if len(choices) == 0:
         return [], []
 
-    if not is_interactive():
-        raise AssertionError(
-            "No release/branch specified and session is not interactive (no TTY detected).\n"
-            "Please provide the '--revision' option."
-        )
+    require_interactive("No release/branch specified.\nPlease provide the '--revision' option.")
 
     if multiple:
         return (

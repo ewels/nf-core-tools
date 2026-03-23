@@ -117,11 +117,10 @@ class ComponentUpdate(ComponentCommand):
             self.modules_json.check_up_to_date()
 
         if not self.update_all and component is None:
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    f"No {self.component_type[:-1]} name provided and session is not interactive (no TTY detected).\n"
-                    f"Please provide the {self.component_type[:-1]} name as a command-line argument or use '--all'."
-                )
+            nf_core.utils.require_interactive(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument or use '--all'."
+            )
             choices = [f"All {self.component_type}", f"Named {self.component_type[:-1]}"]
             self.update_all = (
                 questionary.select(
@@ -146,11 +145,10 @@ class ComponentUpdate(ComponentCommand):
 
         # Ask if we should show the diffs (unless a filename was already given on the command line)
         if not self.save_diff_fn and self.show_diff is None:
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    "Diff display preference not specified and session is not interactive (no TTY detected).\n"
-                    "Please use '--preview', '--save-diff', or neither to skip diff viewing."
-                )
+            nf_core.utils.require_interactive(
+                "Diff display preference not specified.\n"
+                "Please use '--preview', '--save-diff', or neither to skip diff viewing."
+            )
             diff_type = questionary.select(
                 "Do you want to view diffs of the proposed changes?",
                 choices=[
@@ -298,11 +296,10 @@ class ComponentUpdate(ComponentCommand):
                         limit_output=self.limit_output,
                     )
                     # Ask the user if they want to install the component
-                    if not nf_core.utils.is_interactive():
-                        raise UserWarning(
-                            "Cannot interactively confirm updates in a non-interactive session (no TTY detected).\n"
-                            "Please run without '--preview' or use '--save-diff' instead."
-                        )
+                    nf_core.utils.require_interactive(
+                        "Cannot interactively confirm updates.\n"
+                        "Please run without '--preview' or use '--save-diff' instead."
+                    )
                     dry_run = not questionary.confirm(
                         f"Update {self.component_type[:-1]} '{component}'?",
                         default=False,
@@ -393,11 +390,10 @@ class ComponentUpdate(ComponentCommand):
         ]
 
         if component is None:
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    f"No {self.component_type[:-1]} name provided and session is not interactive (no TTY detected).\n"
-                    f"Please provide the {self.component_type[:-1]} name as a command-line argument."
-                )
+            nf_core.utils.require_interactive(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument."
+            )
             component = questionary.autocomplete(
                 f"{self.component_type[:-1].title()} name:",
                 choices=sorted(choices),
@@ -476,12 +472,11 @@ class ComponentUpdate(ComponentCommand):
                 f"You are trying to update the '{Path(install_dir, component)}' {self.component_type[:-1]} from "
                 f"the '{new_branch}' branch. This {self.component_type[:-1]} was installed from the '{current_branch}'"
             )
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    f"Branch mismatch for '{component}' and session is not interactive (no TTY detected).\n"
-                    f"The {self.component_type[:-1]} was installed from '{current_branch}' but you are updating from '{new_branch}'.\n"
-                    f"Please use '-b {current_branch}' to update from the original branch."
-                )
+            nf_core.utils.require_interactive(
+                f"Branch mismatch for '{component}'.\n"
+                f"The {self.component_type[:-1]} was installed from '{current_branch}' but you are updating from '{new_branch}'.\n"
+                f"Please use '-b {current_branch}' to update from the original branch."
+            )
             switch = questionary.confirm(f"Do you want to update using the '{current_branch}' instead?").unsafe_ask()
             if switch:
                 # Change the branch
@@ -755,11 +750,9 @@ class ComponentUpdate(ComponentCommand):
         Then creates the file for saving the diff.
         """
         if self.save_diff_fn is True:
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    "No diff filename provided and session is not interactive (no TTY detected).\n"
-                    "Please provide a filename with '--save-diff <filename>'."
-                )
+            nf_core.utils.require_interactive(
+                "No diff filename provided.\nPlease provide a filename with '--save-diff <filename>'."
+            )
             # From questionary - no filename yet
             self.save_diff_fn = questionary.path(
                 "Enter the filename: ", style=nf_core.utils.nfcore_question_style
@@ -775,11 +768,10 @@ class ComponentUpdate(ComponentCommand):
             return
         # Check if filename already exists (questionary or cli)
         while self.save_diff_fn.exists():
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    f"Diff file '{self.save_diff_fn}' already exists and session is not interactive (no TTY detected).\n"
-                    "Please remove the file or provide a different filename."
-                )
+            nf_core.utils.require_interactive(
+                f"Diff file '{self.save_diff_fn}' already exists.\n"
+                "Please remove the file or provide a different filename."
+            )
             if questionary.confirm(f"'{self.save_diff_fn}' exists. Remove file?").unsafe_ask():
                 os.remove(self.save_diff_fn)
                 break

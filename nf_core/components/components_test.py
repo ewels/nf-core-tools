@@ -113,8 +113,8 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                     f"{self.component_type[:-1].title()} name not provided and prompts deactivated. Please provide the {self.component_type[:-1]} name{' as TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else ''}."
                 )
             elif not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    f"{self.component_type[:-1].title()} name not provided and session is not interactive (no TTY detected).\n"
+                nf_core.utils.require_interactive(
+                    f"{self.component_type[:-1].title()} name not provided.\n"
                     f"Please provide the {self.component_type[:-1]} name as a command-line argument."
                 )
             else:
@@ -127,6 +127,7 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 except LookupError:
                     raise
 
+        assert self.component_name is not None  # Set above by user input, prompt, or guard
         self.component_dir = Path(self.component_type, self.modules_repo.repo_path, *self.component_name.split("/"))
 
         # First, sanity check that the module directory exists

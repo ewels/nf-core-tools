@@ -56,7 +56,7 @@ def pipelines_create(ctx, name, description, author, version, force, outdir, tem
     else:
         if not nf_core.utils.is_interactive():
             log.error(
-                "No pipeline arguments provided and session is not interactive (no TTY detected).\n"
+                "No pipeline arguments provided and session is not interactive (no TTY detected). "
                 "Please provide at least --name, --description, and --author to run non-interactively."
             )
             sys.exit(1)

@@ -102,11 +102,10 @@ class PipelineSync:
                 f"The `template_yaml_path` argument is deprecated. Saving pipeline creation settings in .nf-core.yml instead. Please remove {template_yaml_path} file."
             )
             if getattr(self.config_yml, "template", None) is not None:
-                if not nf_core.utils.is_interactive():
-                    raise UserWarning(
-                        f"A template section already exists in '{self.config_yml_path}' and session is not interactive (no TTY detected).\n"
-                        "Please resolve the template_yaml_path conflict manually."
-                    )
+                nf_core.utils.require_interactive(
+                    f"A template section already exists in '{self.config_yml_path}'.\n"
+                    "Please resolve the template_yaml_path conflict manually."
+                )
                 overwrite_template = questionary.confirm(
                     f"A template section already exists in '{self.config_yml_path}'. Do you want to overwrite?",
                     style=nf_core.utils.nfcore_question_style,

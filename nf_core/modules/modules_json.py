@@ -79,11 +79,9 @@ class ModulesJson:
         new_modules_json = ModulesJsonType(name=pipeline_name, homePage=pipeline_url, repos={})
 
         if not self.modules_dir.exists():
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    "Can't find a ./modules directory and session is not interactive (no TTY detected).\n"
-                    "Please create the modules directory manually."
-                )
+            nf_core.utils.require_interactive(
+                "Can't find a ./modules directory.\nPlease create the modules directory manually."
+            )
             if rich.prompt.Confirm.ask(
                 "[bold][blue]?[/] Can't find a ./modules directory. Would you like me to create one?", default=True
             ):
@@ -180,12 +178,11 @@ class ModulesJson:
         if len(dirs_not_covered) > 0:
             log.info(f"Found custom {component_type[:-1]} repositories when creating 'modules.json'")
             # Loop until all directories in the base directory are covered by a remote
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    f"Found untracked directories in '{component_type}' and session is not interactive (no TTY detected).\n"
-                    f"Untracked: {', '.join(str(dir.relative_to(directory)) for dir in dirs_not_covered)}\n"
-                    "Please configure these directories in your modules.json manually."
-                )
+            nf_core.utils.require_interactive(
+                f"Found untracked directories in '{component_type}'.\n"
+                f"Untracked: {', '.join(str(dir.relative_to(directory)) for dir in dirs_not_covered)}\n"
+                "Please configure these directories in your modules.json manually."
+            )
             while len(dirs_not_covered) > 0:
                 log.info(
                     "The following director{s} in the {t} directory are untracked: '{l}'".format(

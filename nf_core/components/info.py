@@ -97,11 +97,10 @@ class ComponentInfo(ComponentCommand):
             module: str: Module name to check
         """
         if component is None:
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    f"No {self.component_type[:-1]} name provided and session is not interactive (no TTY detected).\n"
-                    f"Please provide the {self.component_type[:-1]} name as a command-line argument."
-                )
+            nf_core.utils.require_interactive(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument."
+            )
             self.local = questionary.confirm(
                 f"Is the {self.component_type[:-1]} locally installed?", style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()

@@ -278,11 +278,9 @@ class ComponentCreate(ComponentCommand):
                 "For example: {}".format(", ".join(process_label_defaults))
             )
         while self.process_label is None:
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    "Process label not provided and session is not interactive (no TTY detected).\n"
-                    "Please provide the '--process-label' option."
-                )
+            nf_core.utils.require_interactive(
+                "Process label not provided.\nPlease provide the '--process-label' option."
+            )
             self.process_label = questionary.autocomplete(
                 "Process resource label:",
                 choices=process_label_defaults,
@@ -298,11 +296,9 @@ class ComponentCreate(ComponentCommand):
                 "[link=https://github.com/nf-core/modules/blob/master/modules/nf-core/bwa/index/main.nf]indexing reference genome files[/link]."
             )
         while self.has_meta is None:
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    "Meta map requirement not specified and session is not interactive (no TTY detected).\n"
-                    "Please provide the '--has-meta' or '--no-meta' option."
-                )
+            nf_core.utils.require_interactive(
+                "Meta map requirement not specified.\nPlease provide the '--has-meta' or '--no-meta' option."
+            )
             self.has_meta = rich.prompt.Confirm.ask(
                 "[violet]Will the module require a meta map of sample information?",
                 default=True,
@@ -381,11 +377,10 @@ class ComponentCreate(ComponentCommand):
 
             # Prompt for new entry if we reset
             if self.component == "":
-                if not nf_core.utils.is_interactive():
-                    raise UserWarning(
-                        f"No {self.component_type[:-1]} name provided and session is not interactive (no TTY detected).\n"
-                        f"Please provide the {self.component_type[:-1]} name as a command-line argument."
-                    )
+                nf_core.utils.require_interactive(
+                    f"No {self.component_type[:-1]} name provided.\n"
+                    f"Please provide the {self.component_type[:-1]} name as a command-line argument."
+                )
                 if self.component_type == "modules":
                     self.component = rich.prompt.Prompt.ask("[violet]Name of tool/subtool").strip()
                 elif self.component_type == "subworkflows":
@@ -458,11 +453,7 @@ class ComponentCreate(ComponentCommand):
         while self.author is None or not github_username_regex.match(self.author):
             if self.author is not None and not github_username_regex.match(self.author):
                 log.warning("Does not look like a valid GitHub username (must start with an '@')!")
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    "GitHub username not provided and session is not interactive (no TTY detected).\n"
-                    "Please provide the '--author' option."
-                )
+            nf_core.utils.require_interactive("GitHub username not provided.\nPlease provide the '--author' option.")
             self.author = rich.prompt.Prompt.ask(
                 f"[violet]GitHub Username:[/]{' (@author)' if author_default is None else ''}",
                 default=author_default,

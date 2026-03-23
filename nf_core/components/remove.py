@@ -53,11 +53,10 @@ class ComponentRemove(ComponentCommand):
         if repo_url is None:
             repo_url = self.modules_repo.remote_url
         if component is None:
-            if not nf_core.utils.is_interactive():
-                raise UserWarning(
-                    f"No {self.component_type[:-1]} name provided and session is not interactive (no TTY detected).\n"
-                    f"Please provide the {self.component_type[:-1]} name as a command-line argument."
-                )
+            nf_core.utils.require_interactive(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument."
+            )
             component = questionary.autocomplete(
                 f"{self.component_type[:-1]} name:",
                 choices=self.components_from_repo(repo_path),
@@ -135,12 +134,10 @@ class ComponentRemove(ComponentCommand):
                     )
                 # ask the user if they still want to remove the component, add it back otherwise
                 if not force:
-                    if not nf_core.utils.is_interactive():
-                        raise UserWarning(
-                            f"{self.component_type[:-1].title()} '{component}' is still included in workflow files and "
-                            "session is not interactive (no TTY detected).\n"
-                            "Use '--force' to force removal."
-                        )
+                    nf_core.utils.require_interactive(
+                        f"{self.component_type[:-1].title()} '{component}' is still included in workflow files.\n"
+                        "Use '--force' to force removal."
+                    )
                     if not questionary.confirm(
                         f"Do you still want to remove the {self.component_type[:-1]} '{component}'?",
                         style=nf_core.utils.nfcore_question_style,
