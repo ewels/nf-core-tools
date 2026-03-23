@@ -93,6 +93,11 @@ class ModuleVersionBumper(ComponentCommand):
 
         # Prompt for module or all
         if module is None and not all_modules:
+            if not nf_core.utils.is_interactive():
+                raise nf_core.modules.modules_utils.ModuleExceptionError(
+                    "No module name provided and session is not interactive (no TTY detected).\n"
+                    "Please provide the module name as a command-line argument or use '--all'."
+                )
             question = {
                 "type": "list",
                 "name": "all_modules",

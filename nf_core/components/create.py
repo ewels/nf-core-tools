@@ -231,6 +231,12 @@ class ComponentCreate(ComponentCommand):
                 log.warning(
                     f"Could not find Conda dependency using the Anaconda API: '{self.tool_conda_name if self.tool_conda_name else self.component}'"
                 )
+                if not nf_core.utils.is_interactive():
+                    log.warning(
+                        f"{e}\nBioconda package not found and session is not interactive. "
+                        "Building module without tool software and meta."
+                    )
+                    break
                 if rich.prompt.Confirm.ask("[violet]Do you want to enter a different Bioconda package name?"):
                     self.tool_conda_name = rich.prompt.Prompt.ask("[violet]Name of Bioconda package").strip()
                     continue
@@ -272,6 +278,11 @@ class ComponentCreate(ComponentCommand):
                 "For example: {}".format(", ".join(process_label_defaults))
             )
         while self.process_label is None:
+            if not nf_core.utils.is_interactive():
+                raise UserWarning(
+                    "Process label not provided and session is not interactive (no TTY detected).\n"
+                    "Please provide the '--process-label' option."
+                )
             self.process_label = questionary.autocomplete(
                 "Process resource label:",
                 choices=process_label_defaults,
@@ -287,6 +298,11 @@ class ComponentCreate(ComponentCommand):
                 "[link=https://github.com/nf-core/modules/blob/master/modules/nf-core/bwa/index/main.nf]indexing reference genome files[/link]."
             )
         while self.has_meta is None:
+            if not nf_core.utils.is_interactive():
+                raise UserWarning(
+                    "Meta map requirement not specified and session is not interactive (no TTY detected).\n"
+                    "Please provide the '--has-meta' or '--no-meta' option."
+                )
             self.has_meta = rich.prompt.Confirm.ask(
                 "[violet]Will the module require a meta map of sample information?",
                 default=True,
@@ -346,7 +362,9 @@ class ComponentCreate(ComponentCommand):
                 elif self.component_type == "subworkflows":
                     log.warning("Subworkflow name must be lower-case letters only, with no punctuation")
                 name_clean = re.sub(r"[^a-z\d/]", "", self.component.lower())
-                if rich.prompt.Confirm.ask(f"[violet]Change '{self.component}' to '{name_clean}'?"):
+                if not nf_core.utils.is_interactive():
+                    self.component = name_clean
+                elif rich.prompt.Confirm.ask(f"[violet]Change '{self.component}' to '{name_clean}'?"):
                     self.component = name_clean
                 else:
                     self.component = ""
@@ -363,6 +381,11 @@ class ComponentCreate(ComponentCommand):
 
             # Prompt for new entry if we reset
             if self.component == "":
+                if not nf_core.utils.is_interactive():
+                    raise UserWarning(
+                        f"No {self.component_type[:-1]} name provided and session is not interactive (no TTY detected).\n"
+                        f"Please provide the {self.component_type[:-1]} name as a command-line argument."
+                    )
                 if self.component_type == "modules":
                     self.component = rich.prompt.Prompt.ask("[violet]Name of tool/subtool").strip()
                 elif self.component_type == "subworkflows":
@@ -435,6 +458,11 @@ class ComponentCreate(ComponentCommand):
         while self.author is None or not github_username_regex.match(self.author):
             if self.author is not None and not github_username_regex.match(self.author):
                 log.warning("Does not look like a valid GitHub username (must start with an '@')!")
+            if not nf_core.utils.is_interactive():
+                raise UserWarning(
+                    "GitHub username not provided and session is not interactive (no TTY detected).\n"
+                    "Please provide the '--author' option."
+                )
             self.author = rich.prompt.Prompt.ask(
                 f"[violet]GitHub Username:[/]{' (@author)' if author_default is None else ''}",
                 default=author_default,
@@ -486,10 +514,15 @@ class ComponentCreate(ComponentCommand):
     def _print_and_delete_pytest_files(self):
         """Prompt if pytest files should be deleted and printed to stdout"""
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
-        if rich.prompt.Confirm.ask(
-            "[violet]Do you want to delete the pytest files?[/]\nPytest file 'main.nf' will be printed to standard output to allow migrating the tests manually to 'main.nf.test'.",
-            default=False,
-        ):
+        if not nf_core.utils.is_interactive():
+            log.info("Non-interactive session: skipping pytest file deletion prompt.")
+            delete_pytest = False
+        else:
+            delete_pytest = rich.prompt.Confirm.ask(
+                "[violet]Do you want to delete the pytest files?[/]\nPytest file 'main.nf' will be printed to standard output to allow migrating the tests manually to 'main.nf.test'.",
+                default=False,
+            )
+        if delete_pytest:
             with open(pytest_dir / "main.nf") as fh:
                 log.info(fh.read())
             if pytest_dir.is_symlink():

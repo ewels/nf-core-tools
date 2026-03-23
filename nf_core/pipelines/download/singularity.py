@@ -253,6 +253,9 @@ class SingularityFetcher(ContainerFetcher):
     @staticmethod
     def prompt_singularity_cachedir_path() -> Path | None:
         """Prompt for the name of the Singularity cache directory"""
+        if not nf_core.utils.is_interactive():
+            log.warning("Cannot prompt for Singularity cache directory in a non-interactive session.")
+            return None
         # Prompt user for a cache directory path
         cachedir_path = None
         while cachedir_path is None:
@@ -291,6 +294,9 @@ class SingularityFetcher(ContainerFetcher):
                 shellprofile_path = profile_path
                 break
 
+        if shellprofile_path is not None and not nf_core.utils.is_interactive():
+            log.debug("Skipping shell profile prompt in non-interactive session.")
+            return
         if shellprofile_path is not None:
             stderr.print(
                 f"\nSo that [blue]${SINGULARITY_CACHE_DIR_ENV_VAR}[/] is always defined, you can add it to your [blue not bold]~/{shellprofile_path.name}[/] file ."
@@ -316,6 +322,8 @@ class SingularityFetcher(ContainerFetcher):
     @staticmethod
     def prompt_singularity_cachedir_utilization() -> str:
         """Ask if we should *only* use singularity cache directory without copying into target"""
+        if not nf_core.utils.is_interactive():
+            return "copy"
         stderr.print(
             "\nIf you are working on the same system where you will run Nextflow, you can amend the downloaded images to the ones in the"
             f"[blue not bold]${SINGULARITY_CACHE_DIR_ENV_VAR}[/] folder, Nextflow will automatically find them. "
@@ -330,6 +338,9 @@ class SingularityFetcher(ContainerFetcher):
     @staticmethod
     def prompt_singularity_cachedir_remote() -> Path | None:
         """Prompt about the index of a remote singularity cache directory"""
+        if not nf_core.utils.is_interactive():
+            log.warning("Cannot prompt for remote cache index in a non-interactive session.")
+            return None
         # Prompt user for a file listing the contents of the remote cache directory
         cachedir_index = None
         while cachedir_index is None:

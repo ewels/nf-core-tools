@@ -106,6 +106,12 @@ class ParamsFileBuilder:
         """
         # Prompt for pipeline if not supplied
         if self.pipeline is None:
+            if not nf_core.utils.is_interactive():
+                log.error(
+                    "No pipeline name provided and session is not interactive (no TTY detected).\n"
+                    "Please provide the pipeline name as a command-line argument."
+                )
+                return False
             launch_type = questionary.select(
                 "Generate parameter file for local pipeline or remote GitHub pipeline?",
                 choices=["Remote pipeline", "Local path"],

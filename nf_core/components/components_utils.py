@@ -42,6 +42,12 @@ def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path
 
     # If not set, prompt the user
     if not repo_type and use_prompt:
+        if not nf_core.utils.is_interactive():
+            raise UserWarning(
+                f"'repository_type' not defined in '{config_fn.name}' and session is not interactive "
+                "(no TTY detected).\n"
+                f"Please add 'repository_type' to your {config_fn.name} file."
+            )
         log.warning("'repository_type' not defined in %s", config_fn.name)
         repo_type = questionary.select(
             "Is this repository a pipeline or a modules repository?",
@@ -71,6 +77,12 @@ def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path
     if repo_type == "modules":
         org = getattr(tools_config, "org_path", "") or ""
         if org == "":
+            if not nf_core.utils.is_interactive():
+                raise UserWarning(
+                    f"'org_path' not defined in '{config_fn.name}' and session is not interactive "
+                    "(no TTY detected).\n"
+                    f"Please add 'org_path' to your {config_fn.name} file."
+                )
             log.warning("Organisation path not defined in %s [key: org_path]", config_fn.name)
             org = questionary.text(
                 "What is the organisation path under which modules and subworkflows are stored?",
@@ -98,6 +110,7 @@ def prompt_component_version_sha(
 ) -> str:
     """
     Creates an interactive questionary prompt for selecting the module/subworkflow version
+    Raises SystemError if the session is not interactive.
     Args:
         component_name (str): Module/subworkflow name,
         component_type (str): "modules" or "subworkflows",
@@ -107,6 +120,11 @@ def prompt_component_version_sha(
     Returns:
         git_sha (str): The selected version of the module/subworkflow
     """
+    if not nf_core.utils.is_interactive():
+        raise SystemError(
+            "Cannot interactively select a version in a non-interactive session (no TTY detected). "
+            "Please use the '--sha' option to specify a version."
+        )
     older_commits_choice = questionary.Choice(
         title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
     )

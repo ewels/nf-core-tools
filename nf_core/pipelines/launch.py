@@ -99,6 +99,12 @@ class Launch:
     def launch_pipeline(self):
         # Prompt for pipeline if not supplied and no web launch ID
         if self.pipeline is None and self.web_id is None:
+            if not nf_core.utils.is_interactive():
+                log.error(
+                    "No pipeline name provided and session is not interactive (no TTY detected).\n"
+                    "Please provide the pipeline name as a command-line argument."
+                )
+                return False
             launch_type = questionary.select(
                 "Launch local pipeline or remote GitHub pipeline?",
                 choices=["Remote pipeline", "Local path"],
@@ -125,6 +131,12 @@ class Launch:
                 )
             else:
                 log.warning(f"Parameter output file already exists! {os.path.relpath(self.params_out)}")
+            if not nf_core.utils.is_interactive():
+                log.error(
+                    f"Parameter output file '{os.path.relpath(self.params_out)}' already exists and session is not interactive (no TTY detected).\n"
+                    "Please remove the file or use '--params-out' to specify a different filename."
+                )
+                return False
             if Confirm.ask("[yellow]Do you want to overwrite this file?"):
                 if not (self.params_in and os.path.abspath(self.params_in) == os.path.abspath(self.params_out)):
                     os.remove(self.params_out)

@@ -112,6 +112,11 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 raise UserWarning(
                     f"{self.component_type[:-1].title()} name not provided and prompts deactivated. Please provide the {self.component_type[:-1]} name{' as TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else ''}."
                 )
+            elif not nf_core.utils.is_interactive():
+                raise UserWarning(
+                    f"{self.component_type[:-1].title()} name not provided and session is not interactive (no TTY detected).\n"
+                    f"Please provide the {self.component_type[:-1]} name as a command-line argument."
+                )
             else:
                 try:
                     self.component_name = questionary.autocomplete(
@@ -136,6 +141,12 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
             if self.no_prompts:
                 log.info(
                     "Setting environment variable '$PROFILE' to Docker as not set otherwise.\n"
+                    "To use Singularity set 'export PROFILE=singularity' in your shell before running this command."
+                )
+                os.environ["PROFILE"] = "docker"
+            elif not nf_core.utils.is_interactive():
+                log.info(
+                    "Setting environment variable '$PROFILE' to Docker as session is not interactive.\n"
                     "To use Singularity set 'export PROFILE=singularity' in your shell before running this command."
                 )
                 os.environ["PROFILE"] = "docker"
@@ -175,15 +186,18 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                     log.info("Updating snapshot")
                     self.update = True
                 elif self.update is None:
-                    answer = Confirm.ask(
-                        "[bold][blue]?[/] nf-test found differences in the snapshot. Do you want to update it?",
-                        default=True,
-                    )
-                    if answer:
-                        log.info("Updating snapshot")
-                        self.update = True
+                    if not nf_core.utils.is_interactive():
+                        log.warning("Snapshot differences found in non-interactive session. Not updating.")
                     else:
-                        log.debug("Snapshot not updated")
+                        answer = Confirm.ask(
+                            "[bold][blue]?[/] nf-test found differences in the snapshot. Do you want to update it?",
+                            default=True,
+                        )
+                        if answer:
+                            log.info("Updating snapshot")
+                            self.update = True
+                        else:
+                            log.debug("Snapshot not updated")
                 if self.update:
                     # update snapshot using nf-test --update-snapshot
                     self.generate_snapshot()
@@ -250,8 +264,10 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         else:
             if self.obsolete_snapshots:
                 # ask if the user wants to remove obsolete snapshots using nf-test --clean-snapshot
-                if self.no_prompts or Confirm.ask(
-                    "nf-test found obsolete snapshots. Do you want to remove them?", default=True
+                if (
+                    self.no_prompts
+                    or not nf_core.utils.is_interactive()
+                    or Confirm.ask("nf-test found obsolete snapshots. Do you want to remove them?", default=True)
                 ):
                     profile = self.profile if self.profile else os.environ["PROFILE"]
                     log.info("Removing obsolete snapshots")

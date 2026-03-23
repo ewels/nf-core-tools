@@ -52,6 +52,11 @@ class ComponentPatch(ComponentCommand):
         components = self.modules_json.get_all_components(self.component_type).get(self.modules_repo.remote_url)
 
         if component is None:
+            if not nf_core.utils.is_interactive():
+                raise UserWarning(
+                    f"No {self.component_type[:-1]} name provided and session is not interactive (no TTY detected).\n"
+                    f"Please provide the {self.component_type[:-1]} name as a command-line argument."
+                )
             choices = [
                 component if directory == self.modules_repo.repo_path else f"{directory}/{component}"
                 for directory, component in components
@@ -94,6 +99,11 @@ class ComponentPatch(ComponentCommand):
         patch_path = Path(self.directory, patch_relpath)
 
         if patch_path.exists():
+            if not nf_core.utils.is_interactive():
+                raise UserWarning(
+                    f"Patch already exists for '{component_fullname}' and session is not interactive (no TTY detected).\n"
+                    "Please remove the existing patch file first."
+                )
             remove = questionary.confirm(
                 f"Patch exists for {self.component_type[:-1]} '{component_fullname}'. Do you want to regenerate it?",
                 style=nf_core.utils.nfcore_question_style,
@@ -157,6 +167,11 @@ class ComponentPatch(ComponentCommand):
         components = self.modules_json.get_all_components(self.component_type).get(self.modules_repo.remote_url)
 
         if component is None:
+            if not nf_core.utils.is_interactive():
+                raise UserWarning(
+                    f"No {self.component_type[:-1]} name provided and session is not interactive (no TTY detected).\n"
+                    f"Please provide the {self.component_type[:-1]} name as a command-line argument."
+                )
             choices = [
                 component if directory == self.modules_repo.repo_path else f"{directory}/{component}"
                 for directory, component in components
@@ -199,6 +214,11 @@ class ComponentPatch(ComponentCommand):
         component_path = Path(self.directory, component_relpath)
 
         if patch_path.exists():
+            if not nf_core.utils.is_interactive():
+                raise UserWarning(
+                    f"Patch exists for '{component_fullname}' and session is not interactive (no TTY detected).\n"
+                    "Please remove the existing patch file first."
+                )
             remove = questionary.confirm(
                 f"Patch exists for {self.component_type[:-1]} '{component_fullname}'. Are you sure you want to remove?",
                 style=nf_core.utils.nfcore_question_style,
