@@ -49,6 +49,7 @@
 - fix incorrect unqoting of `val()` version numbers ([#4042](https://github.com/nf-core/tools/pull/4042))
 - allow versions.yml in the version topics ([#4094](https://github.com/nf-core/tools/pull/4094))
 - Ensure release linting happens on branch named main ([#4121](https://github.com/nf-core/tools/pull/4121))
+- Lint meta variable names ([#4129](https://github.com/nf-core/tools/pull/4129))
 
 ### Modules
 
