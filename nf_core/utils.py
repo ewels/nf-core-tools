@@ -87,12 +87,10 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     ]
 )
 
-_stderr_console = rich.console.Console(stderr=True)
-
 
 def is_interactive() -> bool:
-    """Check if the current session is interactive (has a TTY on stdin/stderr)."""
-    return _stderr_console.is_interactive
+    """Check if the current session is interactive (has a TTY on stdin, stdout, and stderr)."""
+    return sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()
 
 
 NFCORE_CACHE_DIR = Path(

@@ -129,21 +129,20 @@ class Launch:
                 log.warning(
                     f"The parameter input file has the same name as the output file! {os.path.relpath(self.params_out)} will be overwritten."
                 )
-            else:
-                log.warning(f"Parameter output file already exists! {os.path.relpath(self.params_out)}")
-            if not nf_core.utils.is_interactive():
+            elif not nf_core.utils.is_interactive():
                 log.error(
                     f"Parameter output file '{os.path.relpath(self.params_out)}' already exists and session is not interactive (no TTY detected).\n"
                     "Please remove the file or use '--params-out' to specify a different filename."
                 )
                 return False
-            if Confirm.ask("[yellow]Do you want to overwrite this file?"):
-                if not (self.params_in and os.path.abspath(self.params_in) == os.path.abspath(self.params_out)):
+            else:
+                log.warning(f"Parameter output file already exists! {os.path.relpath(self.params_out)}")
+                if Confirm.ask("[yellow]Do you want to overwrite this file?"):
                     os.remove(self.params_out)
                     log.info(f"Deleted {self.params_out}\n")
-            else:
-                log.info("Exiting. Use --params-out to specify a custom output filename.")
-                return False
+                else:
+                    log.info("Exiting. Use --params-out to specify a custom output filename.")
+                    return False
 
         log.info(
             "NOTE: This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n"

@@ -547,7 +547,6 @@ class DownloadWorkflow:
     def prompt_compression_type(self) -> None:
         """Ask user if we should compress the downloaded files"""
         if self.compress_type is None and not stderr.is_interactive:
-            self.compress_type = None
             return
         if self.compress_type is None:
             stderr.print(
