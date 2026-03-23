@@ -58,15 +58,6 @@ jobs:
           GITHUB_PR_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: nf-core -l lint_log.txt pipelines lint --release --dir ${GITHUB_WORKSPACE} --markdown lint_results.md
 
-      - name: Run nextflow lint
-        env:
-          GITHUB_COMMENTS_URL: ${{ github.event.pull_request.comments_url }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_PR_COMMIT: ${{ github.event.pull_request.head.sha }}
-        run: |
-          export NXF_SYNTAX_PARSER=v2
-          nextflow lint ${GITHUB_WORKSPACE} -output markdown > nextflow_lint.md
-
       - name: Save PR number
         if: ${{ always() }}
         run: echo ${{ github.event.pull_request.number }} > PR_number.txt
@@ -79,5 +70,4 @@ jobs:
           path: |
             lint_log.txt
             lint_results.md
-            nextflow_lint.md
             PR_number.txt {%- endraw %}
