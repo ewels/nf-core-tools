@@ -703,7 +703,14 @@ def check_meta_input_names(self, inputs):
             # Extract number if present
             match = re.match(r"^meta(\d+)?$", var)
             if match.group(1):  # Has a number
-                valid_numbers.append(int(match.group(1)))
+                number_str = match.group(1)
+                number_int = int(number_str)
+
+                if number_str != str(number_int) or number_int < 2:
+                    # Check for leading zeros (e.g., meta02, meta003) or meta0 and meta1
+                    invalid_meta_vars.append(var)
+                else:
+                    valid_numbers.append(number_int)
 
     # Check for invalid names
     if invalid_meta_vars:
