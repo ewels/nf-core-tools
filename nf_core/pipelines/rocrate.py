@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Code to deal with pipeline RO (Research Object) Crates"""
 
+import json
 import logging
 import os
 import re
@@ -263,85 +264,163 @@ class ROCrate:
         """
         Add workflow authors to the crate
         """
-        # add author entity to crate
+        if "manifest.contributors" in self.pipeline_obj.nf_config:
+            contributors = self.parse_manifest_contributors()
+        elif "manifest.author" in self.pipeline_obj.nf_config:
+            if self.pipeline_obj.repo:
+                contributors = self.parse_manifest_authors()
+            else:
+                log.debug("No git repository found. Cannot add contributors.")
+                return
+        else:
+            raise KeyError("No authors found")
 
-        try:
-            authors = []
-            if "manifest.author" in self.pipeline_obj.nf_config:
-                authors.extend([a.strip() for a in self.pipeline_obj.nf_config["manifest.author"].split(",")])
-            if "manifest.contributors" in self.pipeline_obj.nf_config:
-                contributors = self.pipeline_obj.nf_config["manifest.contributors"]
-                names = re.findall(r"name:'([^']+)'", contributors)
-                authors.extend(names)
-            if not authors:
-                raise KeyError("No authors found")
-            # add manifest authors as maintainer to crate
+        for author in contributors:
+            log.debug(f"Adding author: {author}")
 
-        except KeyError:
-            log.error("No author or contributors fields found in manifest of nextflow.config")
-            return
+            properties = {
+                "name": author["name"],
+            }
+            if "affiliation" in author:
+                properties["affiliation"] = author["affiliation"]
+            if "github" in author:
+                properties["url"] = author["github"]
+            if "email" in author:
+                properties["email"] = author["email"]
+
+            author_id = author.get("orcid") or get_orcid(author["name"]) or author.get("email")
+            author_entitity = self.crate.add(Person(self.crate, author_id, properties=properties))
+            for mode in author.get("contribution", ["contributor"]):
+                wf_file.append_to(mode, author_entitity)
+
+    def parse_manifest_authors(self) -> list:
+        # parse manifest.author"
+        authors = [a.strip() for a in self.pipeline_obj.nf_config["manifest.author"].split(",")]
         # remove duplicates
         authors = list(set(authors))
+        log.debug(f"Authors: {authors}")
+
         # look at git contributors for author names
-        try:
-            git_contributors: set[str] = set()
-            if self.pipeline_obj.repo is None:
-                log.debug("No git repository found. No git contributors will be added as authors.")
-                return
+        git_contributors: set[str] = set()
+        if self.pipeline_obj.repo is not None:
             commits_touching_path = list(self.pipeline_obj.repo.iter_commits(paths="main.nf"))
 
             for commit in commits_touching_path:
-                if commit.author.name is not None:
-                    git_contributors.add(commit.author.name)
-            # exclude bots
-            contributors = {c for c in git_contributors if not c.endswith("bot") and c != "Travis CI User"}
-
-            log.debug(f"Found {len(contributors)} git authors")
-
-            progress_bar = Progress(
-                "[bold blue]{task.description}",
-                BarColumn(bar_width=None),
-                "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
-                transient=True,
-                disable=os.environ.get("HIDE_PROGRESS", None) is not None,
-            )
-            with progress_bar:
-                bump_progress = progress_bar.add_task(
-                    "Searching for author names on GitHub", total=len(contributors), test_name=""
-                )
-
-                for git_author in contributors:
-                    progress_bar.update(bump_progress, advance=1, test_name=git_author)
-                    git_author = (
-                        requests.get(f"https://api.github.com/users/{git_author}").json().get("name", git_author)
-                    )
-                    if git_author is None:
-                        log.debug(f"Could not find name for {git_author}")
-                        continue
-
-        except AttributeError:
+                name = commit.author.name
+                # exclude bots
+                if name and not name.endswith("bot") and name != "Travis CI User":
+                    git_contributors.add(name)
+        else:
             log.debug("Could not find git contributors")
+        log.debug(f"Found {len(git_contributors)} git authors")
 
-        # remove usernames (just keep names with spaces)
-        named_contributors = {c for c in contributors if " " in c}
-
-        for author in named_contributors:
-            log.debug(f"Adding author: {author}")
-
-            if self.pipeline_obj.repo is None:
-                log.info("No git repository found. No git contributors will be added as authors.")
-                return
-            # get email from git log
-            email = self.pipeline_obj.repo.git.log(f"--author={author}", "--pretty=format:%ae", "-1")
-            orcid = get_orcid(author)
-            author_entitity = self.crate.add(
-                Person(
-                    self.crate, orcid if orcid is not None else "#" + email, properties={"name": author, "email": email}
-                )
+        progress_bar = Progress(
+            "[bold blue]{task.description}",
+            BarColumn(bar_width=None),
+            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
+            transient=True,
+            disable=os.environ.get("HIDE_PROGRESS", None) is not None,
+        )
+        git_authors = []
+        with progress_bar:
+            bump_progress = progress_bar.add_task(
+                "Searching for author names on GitHub", total=len(git_contributors), name=""
             )
-            wf_file.append_to("creator", author_entitity)
-            if author in authors:
-                wf_file.append_to("maintainer", author_entitity)
+
+            for git_author in git_contributors:
+                progress_bar.update(bump_progress, advance=1, name=git_author)
+                github_name = requests.get(f"https://api.github.com/users/{git_author}").json().get("name")
+                if github_name:
+                    # remove usernames (just keep names with spaces)
+                    if " " in github_name and github_name not in authors:
+                        git_authors.append(github_name)
+                else:
+                    log.debug(f"Could not find name for {git_author}")
+        log.debug(f"Git authors: {git_authors}")
+
+        contributors = []
+        assert self.pipeline_obj.repo is not None  # mypy
+        for name in authors + git_authors:
+            log.debug(name)
+
+            # get email from git log
+            email = self.pipeline_obj.repo.git.log(f"--author={name}", "--pretty=format:%ae", "-1")
+
+            struct = {"name": name}
+            if email:
+                struct["email"] = email
+            struct["contribution"] = ["author" if name in authors else "contributor"]
+            contributors.append(struct)
+
+        return contributors
+
+    # Read and parse manifest.contributors. Normalise and fix its fields,
+    # and return as a list of dictionaries
+    def parse_manifest_contributors(self) -> list:
+        field_names = ["name", "affiliation", "github", "contribution", "orcid", "email"]
+        # Grab the contributor list and convert to JSON
+        contributors_str = self.pipeline_obj.nf_config["manifest.contributors"]
+        log.debug(f"manifest.contributors: {contributors_str}")
+        # JSON uses double quotes, not single quotes
+        contributors_str = contributors_str.replace("'", '"')
+        for key in field_names:
+            # All dictionary keys need to be quoted
+            contributors_str = contributors_str.replace(f"{key}:", f'"{key}":')
+        # Use curly brackes for dictionaries
+        contributors_str = contributors_str.replace("], [", "}, {").replace("[[", "[{").replace("]]", "}]")
+        log.debug(f"manifest.contributors: {contributors_str}")
+        contributors = json.loads(contributors_str)
+
+        # Using a progress bar because parsing the git log could be slow
+        progress_bar = Progress(
+            "[bold blue]{task.description}",
+            BarColumn(bar_width=None),
+            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[name]}",
+            transient=True,
+            disable=os.environ.get("HIDE_PROGRESS", None) is not None,
+        )
+        with progress_bar:
+            bump_progress = progress_bar.add_task("Searching for author emails", total=len(contributors), name="")
+
+            for author in contributors:
+                # Normalise fields
+                for key in field_names:
+                    if key in author:
+                        if isinstance(author[key], str):
+                            author[key] = author[key].strip()
+                        elif isinstance(author[key], list):
+                            author[key] = list(filter(lambda s: s, (s.strip() for s in author[key])))
+                        if not author[key]:
+                            del author[key]
+
+                # Name is required
+                if "name" not in author:
+                    log.critical(f"No name  field for author: {author}")
+                    sys.exit(1)
+                progress_bar.update(bump_progress, advance=1, name=author["name"])
+
+                # When missing, fill in the email from the git history (if available)
+                if "email" not in author and self.pipeline_obj.repo:
+                    # get email from git log
+                    name = author["name"].split()[0].replace(",", "")
+                    email = self.pipeline_obj.repo.git.log(f"--author={name}", "--pretty=format:%ae", "-1")
+                    if email:
+                        author["email"] = email
+
+                # Fix the ORCID URL
+                if "orcid" in author:
+                    orcid = author["orcid"]
+                    if not orcid.startswith("http"):
+                        author["orcid"] = "https://orcid.org/" + orcid
+
+                # Fix the GitHub URL
+                if "github" in author:
+                    if author["github"].startswith("@"):
+                        author["github"] = "https://github.com/" + author["github"][1:]
+                    elif not author["github"].startswith("http"):
+                        author["github"] = "https://github.com/" + author["github"]
+
+        return contributors
 
     def update_rocrate(self) -> bool:
         """
