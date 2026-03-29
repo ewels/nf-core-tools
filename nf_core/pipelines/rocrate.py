@@ -293,6 +293,15 @@ class ROCrate:
             for mode in author.get("contribution", ["contributor"]):
                 wf_file.append_to(mode, author_entitity)
 
+    def _make_progress_bar(self):
+        return Progress(
+            "[bold blue]{task.description}",
+            BarColumn(bar_width=None),
+            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[name]}",
+            transient=True,
+            disable=os.environ.get("HIDE_PROGRESS", None) is not None,
+        )
+
     def parse_manifest_authors(self) -> list:
         # parse manifest.author"
         authors = [a.strip() for a in self.pipeline_obj.nf_config["manifest.author"].split(",")]
@@ -314,15 +323,8 @@ class ROCrate:
             log.debug("Could not find git contributors")
         log.debug(f"Found {len(git_contributors)} git authors")
 
-        progress_bar = Progress(
-            "[bold blue]{task.description}",
-            BarColumn(bar_width=None),
-            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
-            transient=True,
-            disable=os.environ.get("HIDE_PROGRESS", None) is not None,
-        )
         git_authors = []
-        with progress_bar:
+        with self._make_progress_bar() as progress_bar:
             bump_progress = progress_bar.add_task(
                 "Searching for author names on GitHub", total=len(git_contributors), name=""
             )
@@ -372,14 +374,7 @@ class ROCrate:
         contributors = json.loads(contributors_str)
 
         # Using a progress bar because parsing the git log could be slow
-        progress_bar = Progress(
-            "[bold blue]{task.description}",
-            BarColumn(bar_width=None),
-            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[name]}",
-            transient=True,
-            disable=os.environ.get("HIDE_PROGRESS", None) is not None,
-        )
-        with progress_bar:
+        with self._make_progress_bar() as progress_bar:
             bump_progress = progress_bar.add_task("Searching for author emails", total=len(contributors), name="")
 
             for author in contributors:
