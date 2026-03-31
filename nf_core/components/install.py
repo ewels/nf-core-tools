@@ -226,7 +226,7 @@ class ComponentInstall(ComponentCommand):
             self.require_prompts(
                 f"No {self.component_type[:-1]} name provided.\n"
                 f"Please provide the {self.component_type[:-1]} name as a command-line argument:\n"
-                f"  nf-core {self.component_type} install <name>"
+                f"  `nf-core {self.component_type} install <name>`"
             )
             component = questionary.autocomplete(
                 f"{'Tool' if self.component_type == 'modules' else 'Subworkflow'} name:",
@@ -281,7 +281,7 @@ class ComponentInstall(ComponentCommand):
             if prompt:
                 self.require_prompts(
                     f"{self.component_type[:-1].title()} '{component}' is already installed.\n"
-                    "Use '--force' to force reinstallation in headless environments"
+                    "Use '--force' to force reinstallation"
                 )
                 message = (
                     "?" if self.component_type == "modules" else " of this subworkflow and all it's imported modules?"

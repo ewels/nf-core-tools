@@ -278,7 +278,7 @@ class ComponentCreate(ComponentCommand):
                 "For example: {}".format(", ".join(process_label_defaults))
             )
         while self.process_label is None:
-            self.require_prompts("Process label not provided.\nPlease provide the '--process-label' option")
+            self.require_prompts("Process label not provided.\nPlease provide the `--process-label` option")
             self.process_label = questionary.autocomplete(
                 "Process resource label:",
                 choices=process_label_defaults,
@@ -295,7 +295,7 @@ class ComponentCreate(ComponentCommand):
             )
         while self.has_meta is None:
             self.require_prompts(
-                "Meta map requirement not specified.\nPlease provide the '--has-meta' or '--no-meta' option"
+                "Meta map requirement not specified.\nPlease provide the `--has-meta` or `--no-meta` option"
             )
             self.has_meta = rich.prompt.Confirm.ask(
                 "[violet]Will the module require a meta map of sample information?",
@@ -356,9 +356,7 @@ class ComponentCreate(ComponentCommand):
                 elif self.component_type == "subworkflows":
                     log.warning("Subworkflow name must be lower-case letters only, with no punctuation")
                 name_clean = re.sub(r"[^a-z\d/]", "", self.component.lower())
-                if self.no_prompts:
-                    self.component = name_clean
-                elif rich.prompt.Confirm.ask(f"[violet]Change '{self.component}' to '{name_clean}'?"):
+                if self.no_prompts or rich.prompt.Confirm.ask(f"[violet]Change '{self.component}' to '{name_clean}'?"):
                     self.component = name_clean
                 else:
                     self.component = ""
@@ -451,7 +449,7 @@ class ComponentCreate(ComponentCommand):
         while self.author is None or not github_username_regex.match(self.author):
             if self.author is not None and not github_username_regex.match(self.author):
                 log.warning("Does not look like a valid GitHub username (must start with an '@')!")
-            self.require_prompts("GitHub username not provided.\nPlease provide the '--author' option")
+            self.require_prompts("GitHub username not provided.\nPlease provide the `--author` option")
             self.author = rich.prompt.Prompt.ask(
                 f"[violet]GitHub Username:[/]{' (@author)' if author_default is None else ''}",
                 default=author_default,
