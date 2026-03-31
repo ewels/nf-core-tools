@@ -171,7 +171,10 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 print("Displaying nf-test error")
             if "Different Snapshot:" in nftest_err.decode():
                 log.error("nf-test failed due to differences in the snapshots")
-                if self.update is None:
+                if self.no_prompts:
+                    log.info("Updating snapshot")
+                    self.update = True
+                elif self.update is None:
                     answer = Confirm.ask(
                         "[bold][blue]?[/] nf-test found differences in the snapshot. Do you want to update it?",
                         default=True,

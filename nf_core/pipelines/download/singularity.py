@@ -230,6 +230,8 @@ class SingularityFetcher(ContainerFetcher):
     @staticmethod
     def prompt_singularity_cachedir_creation() -> bool:
         """Prompt about using singularity cache directory if not already set"""
+        if not nf_core.utils.is_interactive():
+            return False
         stderr.print(
             f"\nNextflow and nf-core can use an environment variable called [blue]${SINGULARITY_CACHE_DIR_ENV_VAR}[/] that is a path to a directory where remote Singularity images are stored. "
             f"This allows downloaded images to be cached in a central location."
