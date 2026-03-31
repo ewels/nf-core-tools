@@ -13,6 +13,7 @@
 - Update python:3.14-slim Docker digest to 6a27522 ([#4072](https://github.com/nf-core/tools/pull/4072))
 - Update GitHub Actions ([#4067](https://github.com/nf-core/tools/pull/4067))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.4 ([#4069](https://github.com/nf-core/tools/pull/4069))
+- Update dependency textual to v8 ([#4078](https://github.com/nf-core/tools/pull/4078))
 - Add aliases to common sub-subcommands like `install`, `lint`, etc. ([#3980](https://github.com/nf-core/tools/pull/3980))
 
   | Command                    | Subcommand                     | Aliases                           |
@@ -49,7 +50,11 @@
 - fix incorrect unqoting of `val()` version numbers ([#4042](https://github.com/nf-core/tools/pull/4042))
 - allow versions.yml in the version topics ([#4094](https://github.com/nf-core/tools/pull/4094))
 - Ensure release linting happens on branch named main ([#4121](https://github.com/nf-core/tools/pull/4121))
+- Add linting for meta and ext keys ([#4127](https://github.com/nf-core/tools/pull/4127))
 - Add strict syntax linting to template with pre-commit ([#4128](https://github.com/nf-core/tools/pull/4128))
+- Lint against the correct repo ([#4140](https://github.com/nf-core/tools/pull/4140))
+- Fix false positive matches to words like text in ext key linting ([#4142](https://github.com/nf-core/tools/pull/4142))
+- Fix changelog bot failing after linting step ([#4155](https://github.com/nf-core/tools/pull/4155))
 
 ### Modules
 
