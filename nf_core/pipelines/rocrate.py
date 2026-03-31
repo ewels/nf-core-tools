@@ -289,9 +289,9 @@ class ROCrate:
                 properties["email"] = author["email"]
 
             author_id = author.get("orcid") or get_orcid(author["name"]) or author.get("email")
-            author_entitity = self.crate.add(Person(self.crate, author_id, properties=properties))
+            author_entity = self.crate.add(Person(self.crate, author_id, properties=properties))
             for mode in author.get("contribution", ["contributor"]):
-                wf_file.append_to(mode, author_entitity)
+                wf_file.append_to(mode, author_entity)
 
     def _make_progress_bar(self):
         return Progress(
@@ -368,7 +368,7 @@ class ROCrate:
         for key in field_names:
             # All dictionary keys need to be quoted
             contributors_str = contributors_str.replace(f"{key}:", f'"{key}":')
-        # Use curly brackes for dictionaries
+        # Use curly brackets for dictionaries
         contributors_str = contributors_str.replace("], [", "}, {").replace("[[", "[{").replace("]]", "}]")
         log.debug(f"manifest.contributors: {contributors_str}")
         contributors = json.loads(contributors_str)
@@ -390,7 +390,7 @@ class ROCrate:
 
                 # Name is required
                 if "name" not in author:
-                    log.critical(f"No name  field for author: {author}")
+                    log.critical(f"No name field for author: {author}")
                     sys.exit(1)
                 progress_bar.update(bump_progress, advance=1, name=author["name"])
 
