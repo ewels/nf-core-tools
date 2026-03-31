@@ -273,7 +273,8 @@ class ROCrate:
                 log.debug("No git repository found. Cannot add contributors.")
                 return
         else:
-            raise KeyError("No authors found")
+            log.error("No authors found in pipeline manifest. Proceeding without adding authors to the RO-Crate.")
+            return
 
         for author in contributors:
             log.debug(f"Adding author: {author}")
