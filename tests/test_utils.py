@@ -1,6 +1,7 @@
 """Tests covering for utility functions."""
 
 import os
+import sys
 from pathlib import Path
 from unittest import mock
 
@@ -15,6 +16,45 @@ from .test_pipelines import TestPipelines
 from .utils import with_temporary_folder
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
+
+
+def _mock_isatty(stdin: bool = True, stdout: bool = True, stderr: bool = True):
+    """Helper to mock sys.stdin/stdout/stderr.isatty() for is_interactive tests."""
+    return (
+        mock.patch.object(sys.stdin, "isatty", return_value=stdin),
+        mock.patch.object(sys.stdout, "isatty", return_value=stdout),
+        mock.patch.object(sys.stderr, "isatty", return_value=stderr),
+    )
+
+
+def test_is_interactive_all_tty():
+    m1, m2, m3 = _mock_isatty(stdin=True, stdout=True, stderr=True)
+    with m1, m2, m3:
+        assert nf_core.utils.is_interactive() is True
+
+
+def test_is_interactive_no_stdin_tty():
+    m1, m2, m3 = _mock_isatty(stdin=False, stdout=True, stderr=True)
+    with m1, m2, m3:
+        assert nf_core.utils.is_interactive() is False
+
+
+def test_is_interactive_no_stdout_tty():
+    m1, m2, m3 = _mock_isatty(stdin=True, stdout=False, stderr=True)
+    with m1, m2, m3:
+        assert nf_core.utils.is_interactive() is False
+
+
+def test_is_interactive_no_stderr_tty():
+    m1, m2, m3 = _mock_isatty(stdin=True, stdout=True, stderr=False)
+    with m1, m2, m3:
+        assert nf_core.utils.is_interactive() is False
+
+
+def test_is_interactive_no_tty():
+    m1, m2, m3 = _mock_isatty(stdin=False, stdout=False, stderr=False)
+    with m1, m2, m3:
+        assert nf_core.utils.is_interactive() is False
 
 
 def test_strip_ansi_codes():
