@@ -10,6 +10,7 @@ from nf_core.modules.lint.main_nf import (
 )
 
 from ...test_modules import TestModules
+from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 from .test_lint_utils import MockModuleLint
 
 
@@ -144,7 +145,9 @@ class TestMainNfLinting(TestModules):
 
         self.mods_install_gitlab_nftest.install("fastqc")
         # Lint a module installed from the gitlab test branch; gitlab test modules that is known to have versions YAML in main.nf
-        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint = nf_core.modules.lint.ModuleLint(
+            directory=self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_NFTEST_BRANCH
+        )
         module_lint.lint(print_results=False, module="fastqc")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert any(w.lint_test in ("main_nf_version_emit", "main_nf_version_topic") for w in module_lint.warned), (
@@ -955,6 +958,7 @@ def test_validate_meta_keys():
     def prefix = "${meta.id}"
     def se = meta.single_end
     def id = meta.subMap(['id'])
+    def m2id = meta2?.id
     """
         ],
     )
@@ -968,12 +972,14 @@ def test_validate_meta_keys():
             """
     def sample = meta.sample
     def strand = meta.strandedness
+    def m2opts = meta2?.options
     """
         ],
     )
     assert len(mock_lint.failed) == 1
     assert "meta.sample" in mock_lint.failed[0][2]
     assert "meta.strandedness" in mock_lint.failed[0][2]
+    assert "meta2?.options" in mock_lint.failed[0][2]
 
     # meta2/meta3 with valid keys
     mock_lint.passed, mock_lint.failed = [], []
@@ -981,7 +987,7 @@ def test_validate_meta_keys():
         mock_lint,
         [
             """
-    def id1 = meta.id
+    def id1 = meta?.id
     def id2 = meta2.id
     def se = meta3.single_end
     """
@@ -1052,6 +1058,19 @@ def test_validate_ext_keys():
     def args2 = task.ext.args2 ?: ''
     def args10 = task.ext.args10 ?: ''
     def args99 = task.ext.args99 ?: ''
+    """
+        ],
+    )
+    assert len(mock_lint.failed) == 0
+
+    # Check false positive matches, e.g. text.tokenize()
+    mock_lint.passed, mock_lint.failed = [], []
+    check_script_section(
+        mock_lint,
+        [
+            """
+    def header = file(reference).text.tokenize('\n').first()
+    def input = context.trim()
     """
         ],
     )
