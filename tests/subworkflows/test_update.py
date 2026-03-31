@@ -60,9 +60,8 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         )
 
     # Mock questionary answer: update components
-    @mock.patch("nf_core.utils.is_interactive", return_value=True)
     @mock.patch.object(questionary.Question, "unsafe_ask", return_value=True)
-    def test_install_at_hash_and_update_limit_output(self, mock_prompt, mock_interactive):
+    def test_install_at_hash_and_update_limit_output(self, mock_prompt):
         """Installs an old version of a subworkflow in the pipeline and updates it with limit_output=True"""
         self.caplog.set_level(logging.INFO)
         assert self.subworkflow_install_old.install("fastq_align_bowtie2")

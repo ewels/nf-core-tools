@@ -68,9 +68,8 @@ class TestModulesInstall(TestModules):
         assert correct_git_sha == current_git_sha
 
     # Mock questionary answer: do not update module, only show diffs
-    @mock.patch("nf_core.utils.is_interactive", return_value=True)
     @mock.patch.object(questionary.Question, "unsafe_ask", return_value=True)
-    def test_install_at_hash_and_update_limit_output(self, mock_prompt, mock_interactive):
+    def test_install_at_hash_and_update_limit_output(self, mock_prompt):
         """Installs an old version of a module in the pipeline and updates it with limited output reporting"""
         self.caplog.set_level(logging.INFO)
         assert self.mods_install_old.install("trimgalore")
@@ -349,9 +348,8 @@ class TestModulesInstall(TestModules):
         assert modules_json.get_module_version("multiqc", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_NEW_SHA
 
     # Mock questionary answer: do not update module, only show diffs
-    @mock.patch("nf_core.utils.is_interactive", return_value=True)
     @mock.patch.object(questionary.Question, "unsafe_ask", return_value=False)
-    def test_update_only_show_differences(self, mock_prompt, mock_interactive):
+    def test_update_only_show_differences(self, mock_prompt):
         """Try updating all modules showing differences.
         Only show diffs, don't actually save any updated files.
         Check that the sha in modules.json is not changed."""
@@ -379,9 +377,8 @@ class TestModulesInstall(TestModules):
         assert cmp_component(Path(tmpdir, mod), Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, mod)) is True
 
     # Mock questionary answer: do not update module, only show diffs
-    @mock.patch("nf_core.utils.is_interactive", return_value=True)
     @mock.patch.object(questionary.Question, "unsafe_ask", return_value=False)
-    def test_update_only_show_differences_when_patch(self, mock_prompt, mock_interactive):
+    def test_update_only_show_differences_when_patch(self, mock_prompt):
         """Try updating all modules showing differences when there's a patched module.
         Don't update some of them.
         Check that the sha in modules.json is not changed."""

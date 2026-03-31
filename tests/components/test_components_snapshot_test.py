@@ -2,7 +2,6 @@
 
 import shutil
 from pathlib import Path
-from unittest import mock
 
 import pytest
 
@@ -29,8 +28,7 @@ class TestTestComponentsUtils(TestComponents):
                 meta_builder.check_inputs()
         assert "Module name not provided and prompts deactivated." in str(excinfo.value)
 
-    @mock.patch("nf_core.utils.is_interactive", return_value=True)
-    def test_components_test_no_installed_modules(self, mock_interactive):
+    def test_components_test_no_installed_modules(self):
         """Test the check_inputs() function - raise UserWarning because installed modules were not found"""
         with set_wd(self.nfcore_modules):
             module_dir = Path(self.nfcore_modules, "modules")

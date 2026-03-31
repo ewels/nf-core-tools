@@ -246,8 +246,7 @@ class TestCli(unittest.TestCase):
         assert "Partial arguments supplied." in result.output
 
     @mock.patch("nf_core.pipelines.create.PipelineCreateApp")
-    @mock.patch("nf_core.utils.is_interactive", return_value=True)
-    def test_create_app(self, mock_interactive, mock_create):
+    def test_create_app(self, mock_create):
         """Test `nf-core pipelines create` runs an App."""
         cmd = ["pipelines", "create"]
         result = self.invoke_cli(cmd)
