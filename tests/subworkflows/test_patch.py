@@ -300,11 +300,9 @@ class TestSubworkflowsPatch(TestSubworkflows):
         # Check that a patch file with the correct name has been created
         assert (subworkflow_path / "bam_sort_stats_samtools.diff").exists()
 
-        with (
-            mock.patch.object(nf_core.components.patch.questionary, "confirm") as mock_questionary,
-            mock.patch("nf_core.utils.is_interactive", return_value=True),
-        ):
+        with mock.patch.object(nf_core.components.patch.questionary, "confirm") as mock_questionary:
             mock_questionary.unsafe_ask.return_value = True
+            patch_obj.no_prompts = False
             patch_obj.remove("bam_sort_stats_samtools")
         # Check that the diff file has been removed
         assert not (subworkflow_path / "bam_sort_stats_samtools.diff").exists()

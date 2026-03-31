@@ -93,8 +93,8 @@ class ModuleVersionBumper(ComponentCommand):
 
         # Prompt for module or all
         if module is None and not all_modules:
-            nf_core.utils.require_interactive(
-                "No module name provided.\nPlease provide the module name as a command-line argument or use '--all'."
+            self.require_prompts(
+                "No module name provided.\nPlease provide the module name as a command-line argument or use '--all'"
             )
             question = {
                 "type": "list",

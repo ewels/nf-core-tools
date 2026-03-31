@@ -42,10 +42,6 @@ def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path
 
     # If not set, prompt the user
     if not repo_type and use_prompt:
-        nf_core.utils.require_interactive(
-            f"'repository_type' not defined in '{config_fn.name}'.\n"
-            f"Please add 'repository_type' to your {config_fn.name} file."
-        )
         log.warning("'repository_type' not defined in %s", config_fn.name)
         repo_type = questionary.select(
             "Is this repository a pipeline or a modules repository?",
@@ -74,10 +70,7 @@ def get_repo_info(directory: Path, use_prompt: bool | None = True) -> tuple[Path
     # Check for org if modules repo
     if repo_type == "modules":
         org = getattr(tools_config, "org_path", "") or ""
-        if org == "":
-            nf_core.utils.require_interactive(
-                f"'org_path' not defined in '{config_fn.name}'.\nPlease add 'org_path' to your {config_fn.name} file."
-            )
+        if org == "" and use_prompt:
             log.warning("Organisation path not defined in %s [key: org_path]", config_fn.name)
             org = questionary.text(
                 "What is the organisation path under which modules and subworkflows are stored?",
@@ -114,9 +107,8 @@ def prompt_component_version_sha(
     Returns:
         git_sha (str): The selected version of the module/subworkflow
     """
-    nf_core.utils.require_interactive(
-        "Cannot interactively select a version.\nPlease use the '--sha' option to specify a version."
-    )
+    if not nf_core.utils.is_interactive():
+        raise UserWarning("Cannot interactively select a version and session is not interactive (no TTY detected).")
     older_commits_choice = questionary.Choice(
         title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
     )

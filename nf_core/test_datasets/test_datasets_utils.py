@@ -10,9 +10,9 @@ import rich
 from nf_core.utils import (
     determine_base_dir,
     fetch_wf_config,
+    is_interactive,
     load_tools_config,
     nfcore_question_style,
-    require_interactive,
     rich_force_colors,
 )
 
@@ -206,7 +206,8 @@ def get_or_prompt_branch(maybe_branch: str) -> tuple[str, list[str]]:
                 if pipeline_name in all_branches:
                     branch_prefill = pipeline_name
 
-        require_interactive("No branch name provided.\nPlease provide the branch name as a command-line argument.")
+        if not is_interactive():
+            raise UserWarning("No branch name provided and session is not interactive (no TTY detected).")
         branch = questionary.autocomplete(
             "Branch name:",
             choices=sorted(all_branches),
@@ -233,7 +234,8 @@ def get_or_prompt_file_selection(files: list[str], query: str | None) -> str:
             file_selected = True
 
     while not file_selected:
-        require_interactive("No file selected.\nPlease provide the file path as a command-line argument.")
+        if not is_interactive():
+            raise UserWarning("No file selected and session is not interactive (no TTY detected).")
         selection = questionary.autocomplete(
             "File:", choices=files, style=nfcore_question_style, default=query, qmark=AUTOCOMPLETION_HINT
         ).unsafe_ask()
