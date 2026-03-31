@@ -289,10 +289,21 @@ class ROCrate:
             if "email" in author:
                 properties["email"] = author["email"]
 
-            author_id = author.get("orcid") or get_orcid(author["name"]) or author.get("email")
+            author_id = self._get_author_identifier(author)
             author_entity = self.crate.add(Person(self.crate, author_id, properties=properties))
             for mode in author.get("contribution", ["contributor"]):
                 wf_file.append_to(mode, author_entity)
+
+    def _get_author_identifier(self, author: dict) -> str | None:
+        orcid = author.get("orcid") or get_orcid(author["name"])
+        if orcid:
+            return orcid
+
+        email = author.get("email")
+        if email:
+            return f"#{email}"
+
+        return None
 
     def _make_progress_bar(self):
         return Progress(

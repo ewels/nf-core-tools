@@ -306,8 +306,10 @@ class TestROCrate(TestPipelines):
 
         graph = self._read_crate_graph()
         person_names = {entity["name"] for entity in graph if entity.get("@type") == "Person"}
+        preferred_person = self._graph_person(graph, "Preferred Person")
 
         self.assertEqual(person_names, {"Preferred Person"})
+        self.assertEqual(preferred_person["@id"], "#preferred@example.com")
 
     def test_rocrate_creation_maps_manifest_contributor_roles_and_identifiers(self):
         """Map contributor roles onto RO-Crate properties and keep deterministic identifiers"""
@@ -347,6 +349,14 @@ class TestROCrate(TestPipelines):
         self.assertEqual(workflow["author"], [{"@id": alice["@id"]}])
         self.assertEqual(workflow["maintainer"], [{"@id": alice["@id"]}])
         self.assertEqual(workflow["contributor"], [{"@id": charlie["@id"]}])
+
+    def test_get_author_identifier_allows_missing_identifier(self):
+        """Allow contributors without ORCID or email to keep a None identifier"""
+
+        author = {"name": "Charlie Brown"}
+
+        with mock.patch("nf_core.pipelines.rocrate.get_orcid", return_value=None):
+            self.assertIsNone(self.rocrate_obj._get_author_identifier(author))
 
     def test_parse_manifest_contributors_requires_names(self):
         """Abort when a contributor entry is missing a name"""
