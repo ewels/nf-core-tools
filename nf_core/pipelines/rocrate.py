@@ -264,15 +264,16 @@ class ROCrate:
         """
         Add workflow authors to the crate
         """
+        contributors = []
         if "manifest.contributors" in self.pipeline_obj.nf_config:
             contributors = self.parse_manifest_contributors()
-        elif "manifest.author" in self.pipeline_obj.nf_config:
+        if not contributors and "manifest.author" in self.pipeline_obj.nf_config:
             if self.pipeline_obj.repo:
                 contributors = self.parse_manifest_authors()
             else:
                 log.debug("No git repository found. Cannot add contributors.")
                 return
-        else:
+        if not contributors:
             log.error("No authors found in pipeline manifest. Proceeding without adding authors to the RO-Crate.")
             return
 
