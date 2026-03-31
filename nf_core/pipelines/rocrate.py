@@ -371,8 +371,17 @@ class ROCrate:
             contributors_str = contributors_str.replace(f"{key}:", f'"{key}":')
         # Use curly brackets for dictionaries
         contributors_str = contributors_str.replace("], [", "}, {").replace("[[", "[{").replace("]]", "}]")
-        log.debug(f"manifest.contributors: {contributors_str}")
-        contributors = json.loads(contributors_str)
+        log.debug(f"manifest.contributors (normalised): {contributors_str}")
+        try:
+            contributors = json.loads(contributors_str)
+        except json.JSONDecodeError as exc:
+            log.error(
+                "Could not parse `manifest.contributors` from nextflow.config. "
+                "Expected a list of maps, for example: [[name: 'First Last', github: 'user']]. "
+                f"Normalised string passed to JSON parser was: {contributors_str!r}. "
+                f"JSON decoding error: {exc}"
+            )
+            return []
 
         # Using a progress bar because parsing the git log could be slow
         with self._make_progress_bar() as progress_bar:

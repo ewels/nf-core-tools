@@ -267,6 +267,24 @@ class TestROCrate(TestPipelines):
         self.assertEqual(contributors_by_name["Bob Example"]["email"], "bob@example.com")
         self.assertEqual(contributors_by_name["Bob Example"]["contribution"], ["contributor"])
 
+    def test_parse_manifest_contributors_logs_parse_errors(self):
+        """Emit a clear error when manifest.contributors cannot be normalised into valid JSON"""
+
+        self._set_manifest_identity(
+            """contributors = [
+                [
+                    name: 'Alice Example',
+                    github: alice
+                ]
+            ]
+            """
+        )
+
+        with self.assertLogs("nf_core.pipelines.rocrate", level="ERROR") as logs:
+            assert self.rocrate_obj.parse_manifest_contributors() == []
+
+        self.assertIn("Could not parse `manifest.contributors`", "\n".join(logs.output))
+
     def test_rocrate_creation_prefers_manifest_contributors_over_author(self):
         """Prefer manifest.contributors metadata when both contributor fields are present"""
 
