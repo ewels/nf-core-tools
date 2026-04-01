@@ -729,8 +729,7 @@ def check_container_link_line(self, raw_line, registry):
 
 def check_meta_input_names(self, inputs):
     """
-    Check that meta* variable names follow the pattern: meta, meta2, meta3, etc.
-
+    Check ``meta_input_names``: The  meta* variable names must follow the pattern `meta`, `meta2`, `meta3`, etc.
     Args:
         inputs (list): List of input variable names
     """
