@@ -18,42 +18,33 @@ from .utils import with_temporary_folder
 TEST_DATA_DIR = Path(__file__).parent / "data"
 
 
-def _mock_isatty(stdin: bool = True, stdout: bool = True, stderr: bool = True):
-    """Helper to mock sys.stdin/stdout/stderr.isatty() for is_interactive tests."""
-    return (
+def test_is_interactive_consults_all_streams():
+    """Verify all three streams are checked — catches a forgotten stream or hardcoded return."""
+    with (
+        mock.patch.object(sys.stdin, "isatty", return_value=True) as m_in,
+        mock.patch.object(sys.stdout, "isatty", return_value=True) as m_out,
+        mock.patch.object(sys.stderr, "isatty", return_value=True) as m_err,
+    ):
+        assert nf_core.utils.is_interactive() is True
+        m_in.assert_called_once()
+        m_out.assert_called_once()
+        m_err.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "stdin,stdout,stderr",
+    [
+        (False, True, True),
+        (True, False, True),
+        (True, True, False),
+    ],
+)
+def test_is_interactive_false_if_any_non_tty(stdin, stdout, stderr):
+    with (
         mock.patch.object(sys.stdin, "isatty", return_value=stdin),
         mock.patch.object(sys.stdout, "isatty", return_value=stdout),
         mock.patch.object(sys.stderr, "isatty", return_value=stderr),
-    )
-
-
-def test_is_interactive_all_tty():
-    m1, m2, m3 = _mock_isatty(stdin=True, stdout=True, stderr=True)
-    with m1, m2, m3:
-        assert nf_core.utils.is_interactive() is True
-
-
-def test_is_interactive_no_stdin_tty():
-    m1, m2, m3 = _mock_isatty(stdin=False, stdout=True, stderr=True)
-    with m1, m2, m3:
-        assert nf_core.utils.is_interactive() is False
-
-
-def test_is_interactive_no_stdout_tty():
-    m1, m2, m3 = _mock_isatty(stdin=True, stdout=False, stderr=True)
-    with m1, m2, m3:
-        assert nf_core.utils.is_interactive() is False
-
-
-def test_is_interactive_no_stderr_tty():
-    m1, m2, m3 = _mock_isatty(stdin=True, stdout=True, stderr=False)
-    with m1, m2, m3:
-        assert nf_core.utils.is_interactive() is False
-
-
-def test_is_interactive_no_tty():
-    m1, m2, m3 = _mock_isatty(stdin=False, stdout=False, stderr=False)
-    with m1, m2, m3:
+    ):
         assert nf_core.utils.is_interactive() is False
 
 
