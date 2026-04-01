@@ -127,6 +127,7 @@ class TestCli(unittest.TestCase):
             "show-hidden" in params,
             params["url"],
             params["id"],
+            "no-prompts" in params,
         )
 
         mock_launcher.return_value.launch_pipeline.assert_called_once()
