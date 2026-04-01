@@ -213,7 +213,7 @@ def pipelines_download(
 
 
 # nf-core pipelines create-params-file
-def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden):
+def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden, no_prompts=False):
     """
     Build a parameter file for a pipeline.
 
@@ -225,7 +225,7 @@ def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hi
     Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
     a local pipeline directory.
     """
-    builder = ParamsFileBuilder(pipeline, revision)
+    builder = ParamsFileBuilder(pipeline, revision, no_prompts)
 
     if not builder.write_params_file(Path(output), show_hidden=show_hidden, force=force):
         sys.exit(1)
@@ -243,6 +243,7 @@ def pipelines_launch(
     save_all,
     show_hidden,
     url,
+    no_prompts=False,
 ):
     """
     Launch a pipeline using a web GUI or command line prompts.
@@ -269,6 +270,7 @@ def pipelines_launch(
         show_hidden,
         url,
         id,
+        no_prompts,
     )
     if not launcher.launch_pipeline():
         sys.exit(1)
@@ -316,7 +318,16 @@ def pipelines_rocrate(
 
 # nf-core pipelines sync
 def pipelines_sync(
-    ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
+    ctx,
+    directory,
+    from_branch,
+    pull_request,
+    github_repository,
+    username,
+    template_yaml,
+    force_pr,
+    blog_post,
+    no_prompts=False,
 ):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
@@ -338,7 +349,15 @@ def pipelines_sync(
         is_pipeline_directory(directory)
         # Sync the given pipeline dir
         sync_obj = PipelineSync(
-            directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
+            directory,
+            from_branch,
+            pull_request,
+            github_repository,
+            username,
+            template_yaml,
+            force_pr,
+            blog_post,
+            no_prompts,
         )
         sync_obj.sync()
     except (SyncExceptionError, PullRequestExceptionError) as e:

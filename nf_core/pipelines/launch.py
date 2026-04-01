@@ -35,6 +35,7 @@ class Launch:
         show_hidden=False,
         url=None,
         web_id=None,
+        no_prompts=False,
     ):
         """Initialise the Launcher class
 
@@ -58,6 +59,7 @@ class Launch:
             self.web_schema_launch_web_url = f"{self.web_schema_launch_url}?id={web_id}"
             self.web_schema_launch_api_url = f"{self.web_schema_launch_url}?id={web_id}&api=true"
         self.nextflow_cmd = None
+        self.no_prompts: bool = no_prompts or not nf_core.utils.is_interactive()
 
         # Fetch remote workflows
         self.wfs = nf_core.pipelines.list.Workflows()
@@ -99,7 +101,7 @@ class Launch:
     def launch_pipeline(self):
         # Prompt for pipeline if not supplied and no web launch ID
         if self.pipeline is None and self.web_id is None:
-            if not nf_core.utils.is_interactive():
+            if self.no_prompts:
                 log.error(
                     "No pipeline name provided and session is not interactive (no TTY detected).\n"
                     "Please provide the pipeline name as a command-line argument."
@@ -129,7 +131,7 @@ class Launch:
                 log.warning(
                     f"The parameter input file has the same name as the output file! {os.path.relpath(self.params_out)} will be overwritten."
                 )
-            elif not nf_core.utils.is_interactive():
+            elif self.no_prompts:
                 log.error(
                     f"Parameter output file '{os.path.relpath(self.params_out)}' already exists and session is not interactive (no TTY detected).\n"
                     "Please remove the file or use '--params-out' to specify a different filename."
