@@ -164,6 +164,10 @@ def main_nf(
         if state == "exec" and not _is_empty(line):
             exec_lines.append(line)
 
+    # Check meta naming
+    if inputs:
+        check_meta_input_names(module, inputs)
+
     # Check that we have required sections
     if not len(emits):
         module.failed.append(("main_nf", "main_nf_script_outputs", "No process 'output' block found", module.main_nf))
@@ -740,6 +744,75 @@ def check_container_link_line(self, raw_line, registry):
                     self.main_nf,
                 )
             )
+
+
+def check_meta_input_names(self, inputs):
+    """
+    Check ``meta_input_names``: The  meta* variable names must follow the pattern `meta`, `meta2`, `meta3`, etc.
+    Args:
+        inputs (list): List of input variable names
+    """
+
+    meta_vars = [var for var in inputs if var.startswith("meta")]
+
+    if not meta_vars:
+        return  # No meta variables to check
+
+    # Expected pattern: 'meta' or 'meta' followed by a number (meta2, meta3, etc.)
+    valid_pattern = re.compile(r"^meta(\d+)?$")
+
+    invalid_meta_vars = []
+    valid_numbers = []
+
+    for var in meta_vars:
+        if not valid_pattern.match(var):
+            invalid_meta_vars.append(var)
+        else:
+            # Extract number if present
+            match = re.match(r"^meta(\d+)?$", var)
+            if match.group(1):  # Has a number
+                number_str = match.group(1)
+                number_int = int(number_str)
+
+                if number_str != str(number_int) or number_int < 2:
+                    # Check for leading zeros (e.g., meta02, meta003) or meta0 and meta1
+                    invalid_meta_vars.append(var)
+                else:
+                    valid_numbers.append(number_int)
+
+    # Check for invalid names
+    if invalid_meta_vars:
+        self.failed.append(
+            (
+                "main_nf",
+                "meta_input_names",
+                f"Meta variables must be named 'meta', 'meta2', 'meta3', etc. Found: {', '.join(invalid_meta_vars)}",
+                self.main_nf,
+            )
+        )
+
+    # Check for proper sequencing (2, 3, 4... not 2, 5, 3)
+    if valid_numbers:
+        expected = list(range(2, len(valid_numbers) + 2))
+        if valid_numbers != expected:
+            self.warned.append(
+                (
+                    "main_nf",
+                    "meta_input_names",
+                    f"Meta variable numbers should be sequential starting at 2. Found: meta{', meta'.join(map(str, valid_numbers))}",
+                    self.main_nf,
+                )
+            )
+
+    if not invalid_meta_vars and (not valid_numbers or valid_numbers == list(range(2, len(valid_numbers) + 2))):
+        self.passed.append(
+            (
+                "main_nf",
+                "meta_input_names",
+                f"Meta variable names follow correct pattern: {', '.join(sorted(meta_vars))}",
+                self.main_nf,
+            )
+        )
 
 
 def _parse_input(self, line_raw):
