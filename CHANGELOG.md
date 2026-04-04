@@ -44,6 +44,7 @@
 - fix nf-core bot snapshot action ([#4083](https://github.com/nf-core/tools/pull/4083))
 - Fix GHA notification for AWS full tests job ([#4092](https://github.com/nf-core/tools/pull/4092))
 - sync: don't overwrite the defaultBranch if already set in nextflow.config ([#3939](https://github.com/nf-core/tools/pull/3939))
+- Parse manifest.contributors to fill in the RO-Crate ([#4147](https://github.com/nf-core/tools/pull/4147))
 
 ### Linting
 
