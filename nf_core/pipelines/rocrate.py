@@ -430,6 +430,8 @@ class ROCrate:
             bump_progress = progress_bar.add_task("Searching for author emails", total=len(contributors), name="")
 
             for author in contributors:
+                progress_bar.update(bump_progress, advance=1, name=author.get("name"))
+
                 # Normalise fields
                 for key in field_names:
                     if key in author:
@@ -444,7 +446,6 @@ class ROCrate:
                 if "name" not in author:
                     log.critical(f"No name field for author: {author}")
                     sys.exit(1)
-                progress_bar.update(bump_progress, advance=1, name=author["name"])
 
                 # Fix the ORCID URL
                 if "orcid" in author:
