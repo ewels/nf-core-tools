@@ -287,8 +287,15 @@ class ROCrate:
                 properties["affiliation"] = author["affiliation"]
             if "github" in author:
                 properties["url"] = author["github"]
+
             if "email" in author:
                 properties["email"] = author["email"]
+            else:
+                # When missing, fill in the email from the git history (if available)
+                if self.pipeline_obj.repo:
+                    email = self._get_git_email_for_name(author["name"])
+                    if email:
+                        properties["email"] = email
 
             author_id = self._get_author_identifier(author)
             author_entity = self.crate.add(Person(self.crate, author_id, properties=properties))
@@ -384,14 +391,10 @@ class ROCrate:
         assert self.pipeline_obj.repo is not None  # mypy
         for name in authors + git_authors:
             log.debug(name)
-
-            # get email from git log
-            email = self._get_git_email_for_name(name)
-
-            struct = {"name": name}
-            if email:
-                struct["email"] = email
-            struct["contribution"] = ["author" if name in authors else "contributor"]
+            struct = {
+                "name": name,
+                "contribution": ["author" if name in authors else "contributor"],
+            }
             contributors.append(struct)
 
         return contributors
@@ -442,12 +445,6 @@ class ROCrate:
                     log.critical(f"No name field for author: {author}")
                     sys.exit(1)
                 progress_bar.update(bump_progress, advance=1, name=author["name"])
-
-                # When missing, fill in the email from the git history (if available)
-                if "email" not in author and self.pipeline_obj.repo:
-                    email = self._get_git_email_for_name(author["name"])
-                    if email:
-                        author["email"] = email
 
                 # Fix the ORCID URL
                 if "orcid" in author:
