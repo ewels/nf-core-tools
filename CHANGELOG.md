@@ -49,6 +49,7 @@
 - chore(deps): update pypa/gh-action-pypi-publish digest to cef2210 ([#4178](https://github.com/nf-core/tools/pull/4178))
 - chore(deps): update python:3.14-slim docker digest to 5e59aae ([#4159](https://github.com/nf-core/tools/pull/4159))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.9 ([#4152](https://github.com/nf-core/tools/pull/4152))
+- Isolate test runs to avoid cross talks of Nextflow assets ([#4175](https://github.com/nf-core/tools/pull/4175))
 
 ### Linting
 
