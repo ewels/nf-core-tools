@@ -456,12 +456,13 @@ def command_pipelines_download(
     default=False,
     help="Show hidden params which don't normally need changing",
 )
+@click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
 @click.pass_context
-def command_pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden):
+def command_pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden, no_prompts):
     """
     Build a parameter file for a pipeline.
     """
-    pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden)
+    pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden, no_prompts)
 
 
 # nf-core pipelines launch
@@ -515,6 +516,7 @@ def command_pipelines_create_params_file(ctx, pipeline, revision, output, force,
     default="https://nf-co.re/launch",
     help="Customise the builder URL (for development work)",
 )
+@click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
 @click.pass_context
 def command_pipelines_launch(
     ctx,
@@ -527,11 +529,14 @@ def command_pipelines_launch(
     save_all,
     show_hidden,
     url,
+    no_prompts,
 ):
     """
     Launch a pipeline using a web GUI or command line prompts.
     """
-    pipelines_launch(ctx, pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url)
+    pipelines_launch(
+        ctx, pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url, no_prompts
+    )
 
 
 # nf-core pipelines list
@@ -626,14 +631,33 @@ def rocrate(
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 @click.option("-b", "--blog-post", type=str, help="Link to the blog post")
+@click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
 def command_pipelines_sync(
-    ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
+    ctx,
+    directory,
+    from_branch,
+    pull_request,
+    github_repository,
+    username,
+    template_yaml,
+    force_pr,
+    blog_post,
+    no_prompts,
 ):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
     """
     pipelines_sync(
-        ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, blog_post
+        ctx,
+        directory,
+        from_branch,
+        pull_request,
+        github_repository,
+        username,
+        template_yaml,
+        force_pr,
+        blog_post,
+        no_prompts,
     )
 
 
@@ -2142,14 +2166,27 @@ def command_create_logo(logo_text, directory, name, theme, width, format, force)
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-def command_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
+@click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
+def command_sync(
+    ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr, no_prompts
+):
     """
     Use `nf-core pipelines sync` instead.
     """
     log.warning(
         "The `[magenta]nf-core sync[/]` command is deprecated. Use `[magenta]nf-core pipelines sync[/]` instead."
     )
-    pipelines_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
+    pipelines_sync(
+        ctx,
+        directory,
+        from_branch,
+        pull_request,
+        github_repository,
+        username,
+        template_yaml,
+        force_pr,
+        no_prompts=no_prompts,
+    )
 
 
 # nf-core bump-version (deprecated)
@@ -2250,6 +2287,7 @@ def command_list(ctx, keywords, sort, json, show_archived):
     default="https://nf-co.re/launch",
     help="Customise the builder URL (for development work)",
 )
+@click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
 @click.pass_context
 def command_launch(
     ctx,
@@ -2262,6 +2300,7 @@ def command_launch(
     save_all,
     show_hidden,
     url,
+    no_prompts,
 ):
     """
     Use `nf-core pipelines launch` instead.
@@ -2269,7 +2308,9 @@ def command_launch(
     log.warning(
         "The `[magenta]nf-core launch[/]` command is deprecated. Use `[magenta]nf-core pipelines launch[/]` instead."
     )
-    pipelines_launch(ctx, pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url)
+    pipelines_launch(
+        ctx, pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url, no_prompts
+    )
 
 
 # nf-core create-params-file (deprecated)
@@ -2292,14 +2333,15 @@ def command_launch(
     default=False,
     help="Show hidden params which don't normally need changing",
 )
-def command_create_params_file(pipeline, revision, output, force, show_hidden):
+@click.option("-n", "--no-prompts", is_flag=True, default=False, help="Run without prompting for user input")
+def command_create_params_file(pipeline, revision, output, force, show_hidden, no_prompts):
     """
     Use `nf-core pipelines create-params-file` instead.
     """
     log.warning(
         "The `[magenta]nf-core create-params-file[/]` command is deprecated. Use `[magenta]nf-core pipelines create-params-file[/]` instead."
     )
-    pipelines_create_params_file(pipeline, revision, output, force, show_hidden)
+    pipelines_create_params_file(pipeline, revision, output, force, show_hidden, no_prompts)
 
 
 # nf-core download (deprecated)
