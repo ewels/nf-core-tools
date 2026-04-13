@@ -304,11 +304,12 @@ class WorkflowRepo(SyncedRepo):
     def bare_clone(self, destination: Path):
         if self.repo:
             try:
-                destfolder = destination.parent.absolute()
+                destination = destination.absolute()
+                destfolder = destination.parent
                 if not destfolder.exists():
-                    destfolder.mkdir()
+                    destfolder.mkdir(parents=True, exist_ok=True)
                 if destination.exists():
                     shutil.rmtree(destination)
-                self.repo.clone(str(destfolder), bare=True)
+                self.repo.clone(str(destination), bare=True)
             except (OSError, GitCommandError, InvalidGitRepositoryError) as e:
                 log.error(f"[red]Failure to create the pipeline download[/]\n{e}\n")
