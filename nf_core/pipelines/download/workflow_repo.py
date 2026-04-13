@@ -70,6 +70,7 @@ class WorkflowRepo(SyncedRepo):
         self.hide_progress = hide_progress
 
         self.setup_local_repo(remote=remote_url, location=location, in_cache=in_cache)
+        self.revision_to_commit = dict(zip(self.revision, self.commit))
 
         # additional tags to be added to the repository
         self.additional_tags = additional_tags if additional_tags else None
@@ -135,7 +136,9 @@ class WorkflowRepo(SyncedRepo):
         if location:
             self.local_repo_dir = location / self.fullname
         else:
-            self.local_repo_dir = Path(NFCORE_DIR) if not in_cache else Path(NFCORE_CACHE_DIR, self.fullname)
+            self.local_repo_dir = (
+                Path(NFCORE_DIR, self.fullname) if not in_cache else Path(NFCORE_CACHE_DIR, self.fullname)
+            )
 
         try:
             if not self.local_repo_dir.exists():
@@ -202,7 +205,14 @@ class WorkflowRepo(SyncedRepo):
                     self.repo.delete_tag(tag)
 
                 # switch to a revision that should be kept, because deleting heads fails, if they are checked out (e.g. "main")
-                self.checkout(self.revision[0])
+                try:
+                    self.checkout(self.revision[0])
+                except GitCommandError:
+                    fallback_commit = self.revision_to_commit.get(self.revision[0])
+                    if fallback_commit:
+                        self.checkout(fallback_commit)
+                    else:
+                        raise
 
                 # delete unwanted heads/branches from repository
                 for head in heads_to_remove:
@@ -211,8 +221,12 @@ class WorkflowRepo(SyncedRepo):
                 # ensure all desired revisions/branches are available
                 for revision in desired_revisions:
                     if not self.repo.is_valid_object(revision):
-                        self.checkout(revision)
-                        self.repo.create_head(revision, revision)
+                        if (commit := self.revision_to_commit.get(revision)) is None:
+                            self.checkout(revision)
+                            self.repo.create_head(revision, revision)
+                        else:
+                            self.checkout(commit)
+                            self.repo.create_head(revision, commit)
                         if self.repo.head.is_detached:
                             self.repo.head.reset(index=True, working_tree=True)
 

@@ -258,7 +258,7 @@ class DownloadWorkflow:
 
         # Set an output filename now that we have the outdir
         if self.platform:
-            self.output_filename = self.outdir.parent / (self.outdir.name + ".git")
+            self.output_filename = self.outdir / (self.outdir.name + ".git")
             summary_log.append(f"Output file: '{self.output_filename}'")
         elif self.compress_type is not None:
             self.output_filename = self.outdir.parent / (self.outdir.name + "." + self.compress_type)
@@ -352,7 +352,7 @@ class DownloadWorkflow:
         self.workflow_repo = WorkflowRepo(
             remote_url=f"https://github.com/{self.pipeline}.git",
             revision=self.revision if self.revision else None,
-            commit=self.wf_sha.values() if bool(self.wf_sha) else None,
+            commit=list(self.wf_sha.values()) if bool(self.wf_sha) else None,
             additional_tags=self.additional_tags,
             location=location if location else None,  # manual location is required for the tests to work
             in_cache=False,
@@ -362,7 +362,7 @@ class DownloadWorkflow:
         self.workflow_repo.tidy_tags_and_branches()
 
         # create a bare clone of the modified repository needed for Seqera Platform
-        self.workflow_repo.bare_clone(self.outdir / self.output_filename)
+        self.workflow_repo.bare_clone(self.output_filename)
 
         # extract the required containers
         if self.container_system in {"singularity", "docker"}:
