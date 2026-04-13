@@ -13,10 +13,7 @@ import nf_core
 import nf_core.modules.modules_utils
 from nf_core.pipelines.download.utils import DownloadError
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
-from nf_core.utils import (
-    NFCORE_CACHE_DIR,
-    NFCORE_DIR,
-)
+from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +32,7 @@ class WorkflowRepo(SyncedRepo):
         self,
         remote_url,
         revision,
-        commit,
+        revision_commits,
         additional_tags,
         location=None,
         hide_progress=False,
@@ -59,18 +56,12 @@ class WorkflowRepo(SyncedRepo):
             self.revision = [*revision]
         else:
             self.revision = []
-        if isinstance(commit, str):
-            self.commit = [commit]
-        elif isinstance(commit, list):
-            self.commit = [*commit]
-        else:
-            self.commit = []
+        self.revision_to_commit: dict[str, str] = dict(revision_commits) if isinstance(revision_commits, dict) else {}
         self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
         self.retries = 0  # retries for setting up the locally cached repository
         self.hide_progress = hide_progress
 
         self.setup_local_repo(remote=remote_url, location=location, in_cache=in_cache)
-        self.revision_to_commit = dict(zip(self.revision, self.commit))
 
         # additional tags to be added to the repository
         self.additional_tags = additional_tags if additional_tags else None
@@ -235,16 +226,21 @@ class WorkflowRepo(SyncedRepo):
                     if self.repo.is_valid_object("latest"):
                         # "latest" exists as tag but not as branch
                         self.repo.create_head("latest", "latest")  # create a new head for latest
-                        self.checkout("latest")
                     else:
                         # desired revisions may contain arbitrary branch names that do not correspond to valid semantic versioning patterns.
                         valid_versions = [
                             Version(v) for v in desired_revisions if re.match(r"\d+\.\d+(?:\.\d+)*(?:[\w\-_])*", v)
                         ]
-                        # valid versions sorted in ascending order, last will be aliased as "latest".
-                        latest = sorted(valid_versions)[-1]
-                        self.repo.create_head("latest", str(latest))
-                        self.checkout(latest)
+                        # If no semantic versions are available (e.g. SHA-only revisions), fall back to the first
+                        # requested revision and its mapped commit.
+                        if valid_versions:
+                            latest_ref = str(sorted(valid_versions)[-1])
+                        elif self.revision:
+                            latest_ref = self.revision_to_commit.get(self.revision[0], self.revision[0])
+                        else:
+                            raise DownloadError("No revision available to create required 'latest' branch.")
+                        self.repo.create_head("latest", latest_ref)
+                    self.checkout("latest")
                     if self.repo.head.is_detached:
                         self.repo.head.reset(index=True, working_tree=True)
 
