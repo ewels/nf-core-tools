@@ -122,6 +122,7 @@
 
 ### Template
 
+- add trainling slash for pipelines_testdata_base_path ([#3701](https://github.com/nf-core/tools/pull/3701))
 - switch to uv and prek for pipeline linting workflow ([#3942](https://github.com/nf-core/tools/pull/3942))
 - add schema to devcontainer.json ([#3908](https://github.com/nf-core/tools/pull/3908))
 
