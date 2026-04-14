@@ -142,7 +142,7 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                     with open(snap_file) as snap_fh:
                         try:
                             snap_content = json.load(snap_fh)
-                            for test_name in snap_content.keys():
+                            for test_name in snap_content:
                                 if "d41d8cd98f00b204e9800998ecf8427e" in str(snap_content[test_name]):
                                     if "stub" not in test_name:
                                         module.failed.append(
@@ -315,7 +315,7 @@ def _check_stub_gzip_syntax(module: NFCoreComponent):
     stub_blocks = stub_pattern.findall(content)
 
     invalid_gz_patterns = []
-    for i, stub_block in enumerate(stub_blocks):
+    for stub_block in stub_blocks:
         # Look for lines that create .gz files
         # Only valid pattern is: echo "" | gzip > file.gz
         # Each .gz creation is always on a single line
@@ -326,7 +326,7 @@ def _check_stub_gzip_syntax(module: NFCoreComponent):
         for line in gz_lines:
             line = line.strip()
             # Skip empty lines and comments
-            if not line or line.startswith("//") or line.startswith("#"):
+            if not line or line.startswith(("//", "#")):
                 continue
 
             # The ONLY valid pattern is: echo "" | gzip > file.gz

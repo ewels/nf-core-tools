@@ -83,11 +83,15 @@ def get_remote_branch_names() -> list[str]:
     return branches
 
 
-def get_remote_tree_for_branch(branch: str, only_files: bool = True, ignored_prefixes: list[str] = []) -> list[str]:
+def get_remote_tree_for_branch(
+    branch: str, only_files: bool = True, ignored_prefixes: list[str] | None = None
+) -> list[str]:
     """
     For a given branch name, return the file tree by querying the github API
     at the endpoint at `/repos/nf-core/test-datasets/git/trees/`
     """
+    if ignored_prefixes is None:
+        ignored_prefixes = []
     gh_filetree_file_value = "blob"  # value in nodes used to refer to "files"
     gh_response_filetree_key = "tree"  # key in response to refer to the filetree
     gh_filetree_type_key = "type"  # key in filetree nodes used to refer to their type
@@ -128,20 +132,18 @@ def get_remote_tree_for_branch(branch: str, only_files: bool = True, ignored_pre
 
 def list_files_by_branch(
     branch: str = "",
-    branches: list[str] = [],
-    ignored_file_prefixes: list[str] = [
-        ".",
-        "CITATION",
-        "LICENSE",
-        "README",
-        "docs",
-    ],
+    branches: list[str] | None = None,
+    ignored_file_prefixes: list[str] | None = None,
 ) -> dict[str, list[str]]:
     """
     Lists files for all branches in the test-datasets github repo.
     Returns dictionary with branchnames as keys and file-lists as values
     """
 
+    if ignored_file_prefixes is None:
+        ignored_file_prefixes = [".", "CITATION", "LICENSE", "README", "docs"]
+    if branches is None:
+        branches = []
     if len(branches) == 0:
         log.debug("Fetching list of remote branch names")
         branches = get_remote_branch_names()
@@ -152,7 +154,7 @@ def list_files_by_branch(
             log.error(f"No branches matching '{branch}'")
 
     log.debug("Fetching remote trees")
-    tree = dict()
+    tree = {}
     for b in branches:
         tree[b] = get_remote_tree_for_branch(b, only_files=True, ignored_prefixes=ignored_file_prefixes)
 
@@ -240,7 +242,7 @@ def get_or_prompt_file_selection(files: list[str], query: str | None) -> str:
             "File:", choices=files, style=nfcore_question_style, default=query, qmark=AUTOCOMPLETION_HINT
         ).unsafe_ask()
 
-        file_selected = any([selection == file for file in files])
+        file_selected = any(selection == file for file in files)
         if not file_selected:
             stdout.print("Please select a file.")
 

@@ -113,10 +113,7 @@ class SingularityFetcher(ContainerFetcher):
                             f"Proceeding without consideration of the remote ${SINGULARITY_CACHE_DIR_ENV_VAR} index."
                         )
                         self.container_cache_index = None
-                        if os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR):
-                            container_cache_utilisation = "copy"  # default to copy if possible, otherwise skip.
-                        else:
-                            container_cache_utilisation = None
+                        container_cache_utilisation = "copy" if os.environ.get(SINGULARITY_CACHE_DIR_ENV_VAR) else None
             else:
                 log.warning("[red]No remote cache index specified, skipping remote container download.[/]")
 
@@ -385,7 +382,7 @@ class SingularityFetcher(ContainerFetcher):
                     containers_remote.append(match.group(0))
             if n_total_images == 0:
                 raise LookupError("Could not find valid container names in the index file.")
-            containers_remote = sorted(list(set(containers_remote)))
+            containers_remote = sorted(set(containers_remote))
             log.debug(containers_remote)
             return containers_remote
 
@@ -500,7 +497,8 @@ class SingularityFetcher(ContainerFetcher):
             container, output_path = input_params
             try:
                 self.progress.advance_remote_fetch_task()
-            except Exception as e:
+            except RuntimeError as e:
+                # Rich progress may raise RuntimeError if called from wrong thread
                 log.error(f"Error updating progress bar: {e}")
 
             if status == FileDownloader.Status.DONE:
@@ -648,6 +646,12 @@ class SingularityFetcher(ContainerFetcher):
         if not self.get_container_output_dir().is_dir():
             log.debug(f"Container output directory not found, creating: {self.get_container_output_dir()}")
             self.get_container_output_dir().mkdir(parents=True, exist_ok=True)
+
+    def cleanup(self) -> None:
+        """
+        Cleanup any temporary files or resources.
+        """
+        super().cleanup()
 
 
 # Distinct errors for the Singularity container download, required for acting on the exceptions
@@ -902,31 +906,34 @@ class FileDownloader:
         # Set up download progress bar as a new task
         nice_name = self.nice_name(remote_path)
 
-        with self.progress.sub_task(nice_name, start=False, total=False, progress_type="download") as task:
+        with (
+            self.progress.sub_task(nice_name, start=False, total=False, progress_type="download") as task,
+            intermediate_file(output_path) as fh,
+        ):
             # Open file handle and download
             # This temporary will be automatically renamed to the target if there are no errors
-            with intermediate_file(output_path) as fh:
-                # Disable caching as this breaks streamed downloads
-                with requests_cache.disabled():
-                    r = requests.get(remote_path, allow_redirects=True, stream=True, timeout=60 * 5)
-                    filesize = r.headers.get("Content-length")
-                    if filesize:
-                        self.progress.update(task, total=int(filesize))
-                        self.progress.start_task(task)
 
-                    # Stream download
-                    has_content = False
-                    for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
-                        # Check that the user didn't hit ctrl-c
-                        if self.kill_with_fire:
-                            raise KeyboardInterrupt
-                        self.progress.update(task, advance=len(data))
-                        fh.write(data)
-                        has_content = True
+            # Disable caching as this breaks streamed downloads
+            with requests_cache.disabled():
+                r = requests.get(remote_path, allow_redirects=True, stream=True, timeout=60 * 5)
+                filesize = r.headers.get("Content-length")
+                if filesize:
+                    self.progress.update(task, total=int(filesize))
+                    self.progress.start_task(task)
 
-                    # Check that we actually downloaded something
-                    if not has_content:
-                        raise DownloadError(f"Downloaded file '{remote_path}' is empty")
+                # Stream download
+                has_content = False
+                for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
+                    # Check that the user didn't hit ctrl-c
+                    if self.kill_with_fire:
+                        raise KeyboardInterrupt
+                    self.progress.update(task, advance=len(data))
+                    fh.write(data)
+                    has_content = True
 
-                # Set image file permissions to user=read,write,execute group/all=read,execute
-                os.chmod(fh.name, 0o755)
+                # Check that we actually downloaded something
+                if not has_content:
+                    raise DownloadError(f"Downloaded file '{remote_path}' is empty")
+
+            # Set image file permissions to user=read,write,execute group/all=read,execute
+            Path(fh.name).chmod(0o755)

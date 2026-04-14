@@ -15,7 +15,6 @@ import jinja2
 import yaml
 
 import nf_core
-import nf_core.pipelines.schema
 import nf_core.utils
 from nf_core.pipelines.create.utils import CreateConfig, features_yml_path, load_features_yaml
 from nf_core.pipelines.create_logo import create_logo
@@ -74,9 +73,7 @@ class PipelineCreate:
                 self.config.outdir = outdir if outdir else Path().cwd()
             except (FileNotFoundError, UserWarning):
                 log.debug("The '.nf-core.yml' configuration file was not found.")
-        elif (name and description and author) or (
-            template_config and (isinstance(template_config, str) or isinstance(template_config, Path))
-        ):
+        elif (name and description and author) or (template_config and (isinstance(template_config, (str, Path)))):
             # Obtain a CreateConfig object from the template yaml file
             self.config = self.check_template_yaml_info(template_config, name, description, author)
             self.update_config(organisation, version, force, outdir)
@@ -154,8 +151,8 @@ class PipelineCreate:
                 with open(template_yaml) as f:
                     template_yaml = yaml.safe_load(f)
                     config = CreateConfig(**template_yaml)
-            except FileNotFoundError:
-                raise UserWarning(f"Template YAML file '{template_yaml}' not found.")
+            except FileNotFoundError as e:
+                raise UserWarning(f"Template YAML file '{template_yaml}' not found.") from e
 
         # Check required fields
         missing_fields = []
@@ -222,7 +219,7 @@ class PipelineCreate:
         skip_areas = [
             t_area
             for section in self.template_features_yml.values()
-            for t_area in section["features"].keys()
+            for t_area in section["features"]
             if t_area in features_to_skip and section["features"][t_area]["skippable_paths"]
             # for t_area in section["features"][t_area]["skippable_paths"]
         ]
@@ -250,13 +247,12 @@ class PipelineCreate:
         jinja_params["logo_light"] = f"{jinja_params['name_noslash']}_logo_light.png"
         jinja_params["logo_dark"] = f"{jinja_params['name_noslash']}_logo_dark.png"
         jinja_params["default_branch"] = self.default_branch
-        if config_yml is not None:
-            if (
-                hasattr(config_yml, "lint")
-                and hasattr(config_yml["lint"], "nextflow_config")
-                and hasattr(config_yml["lint"]["nextflow_config"], "manifest.name")
-            ):
-                return jinja_params, skip_areas
+        if config_yml is not None and (
+            hasattr(config_yml, "lint")
+            and hasattr(config_yml["lint"], "nextflow_config")
+            and hasattr(config_yml["lint"]["nextflow_config"], "manifest.name")
+        ):
+            return jinja_params, skip_areas
 
         # Check that the pipeline name matches the requirements
         if not re.match(r"^[a-z]+$", jinja_params["short_name"]):
@@ -332,12 +328,13 @@ class PipelineCreate:
         for template_fn_path in template_files:
             # Skip files that are in the self.skip_paths list
             for skip_path in self.skip_paths:
+                # TODO: Use Path.parts instead of str().startswith() to avoid unnecessary string conversion
                 if str(template_fn_path.relative_to(template_dir)).startswith(skip_path):
                     break
             else:
                 if template_fn_path.is_dir():
                     continue
-                if any([s in str(template_fn_path) for s in ignore_strs]):
+                if any(s in str(template_fn_path) for s in ignore_strs):
                     log.debug(f"Ignoring '{template_fn_path}' in jinja2 template creation")
                     continue
 
@@ -369,14 +366,13 @@ class PipelineCreate:
                     log.debug(f"Copying file without Jinja: '{output_path}' - {e}")
                     shutil.copy(template_fn_path, output_path)
 
-                # Something else went wrong
-                except Exception as e:
+                # Jinja rendering error or other template issues
+                except (jinja2.TemplateError, OSError) as e:
                     log.error(f"Copying raw file as error rendering with Jinja: '{output_path}' - {e}")
                     shutil.copy(template_fn_path, output_path)
 
                 # Mirror file permissions
-                template_stat = os.stat(template_fn_path)
-                os.chmod(output_path, template_stat.st_mode)
+                output_path.chmod(template_fn_path.stat().st_mode)
 
         if self.config.is_nfcore:
             # Make a logo and save it, if it is a nf-core pipeline
@@ -411,7 +407,7 @@ class PipelineCreate:
         lint_config = {}
         for area in set((self.config.skip_features or []) + self.skip_areas):
             try:
-                for section_name in self.template_features_yml.keys():
+                for section_name in self.template_features_yml:
                     if area in self.template_features_yml[section_name]["features"]:
                         for lint_test in self.template_features_yml[section_name]["features"][area]["linting"]:
                             try:
@@ -503,7 +499,7 @@ class PipelineCreate:
                 else:
                     raise UserWarning(
                         "Branches 'TEMPLATE' and 'dev' already exist. Use --force to overwrite existing branches."
-                    )
+                    ) from e
         if self.is_interactive:
             try:
                 log.info(f"Pipeline created: ./{self.outdir.relative_to(Path.cwd())}")

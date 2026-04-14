@@ -254,22 +254,22 @@ def get_channel_info_from_biotools(
     inputs = {}
     outputs = {}
 
-    def _iterate_input_output(type) -> DictWithStrAndTuple:
+    def _iterate_input_output(funct_data, io_type) -> DictWithStrAndTuple:
         type_info = {}
-        if type in funct:
-            for element in funct[type]:
+        if io_type in funct_data:
+            for element in funct_data[io_type]:
                 if "data" in element:
                     element_name = "_".join(element["data"]["term"].lower().split(" "))
                     uris = [element["data"]["uri"]]
                     terms = [element["data"]["term"]]
                     patterns = []
                 if "format" in element:
-                    for format in element["format"]:
+                    for fmt in element["format"]:
                         # Append the EDAM URI
-                        uris.append(format["uri"])
+                        uris.append(fmt["uri"])
                         # Append the EDAM term, getting the first word in case of complicated strings. i.e. "FASTA format"
-                        patterns.append(format["term"].lower().split(" ")[0])
-                        terms.append(format["term"])
+                        patterns.append(fmt["term"].lower().split(" ")[0])
+                        terms.append(fmt["term"])
                     type_info[element_name] = (uris, terms, patterns)
         return type_info
 
@@ -279,8 +279,8 @@ def get_channel_info_from_biotools(
             if "function" in tool:
                 # Parse all tool functions
                 for funct in tool["function"]:
-                    inputs.update(_iterate_input_output("input"))
-                    outputs.update(_iterate_input_output("output"))
+                    inputs.update(_iterate_input_output(funct, "input"))
+                    outputs.update(_iterate_input_output(funct, "output"))
             return inputs, outputs
 
     # If the tool name was not found in the response

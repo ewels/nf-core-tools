@@ -1,5 +1,4 @@
 import logging
-import os
 import sys
 from pathlib import Path
 
@@ -235,7 +234,7 @@ def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hi
 def pipelines_launch(
     ctx,
     pipeline,
-    id,
+    launch_id,
     revision,
     command_only,
     params_in,
@@ -269,7 +268,7 @@ def pipelines_launch(
         save_all,
         show_hidden,
         url,
-        id,
+        launch_id,
         no_prompts,
     )
     if not launcher.launch_pipeline():
@@ -366,7 +365,7 @@ def pipelines_sync(
 
 
 # nf-core pipelines create-logo
-def pipelines_create_logo(logo_text, directory, name, theme, width, format, force):
+def pipelines_create_logo(logo_text, directory, name, theme, width, img_format, force):
     """
     Generate a logo with the nf-core logo template.
 
@@ -377,7 +376,7 @@ def pipelines_create_logo(logo_text, directory, name, theme, width, format, forc
     try:
         if directory == ".":
             directory = Path.cwd()
-        logo_path = create_logo(logo_text, directory, name, theme, width, format, force)
+        logo_path = create_logo(logo_text, directory, name, theme, width, img_format, force)
         # Print path to logo relative to current working directory
         try:
             logo_path = Path(logo_path).relative_to(Path.cwd())
@@ -470,11 +469,11 @@ def pipelines_schema_lint(schema_path):
 
 
 # nf-core pipelines schema docs
-def pipelines_schema_docs(schema_path, output, format, force, columns):
+def pipelines_schema_docs(schema_path, output, output_format, force, columns):
     """
     Outputs parameter documentation for a pipeline schema.
     """
-    if not os.path.exists(schema_path):
+    if not schema_path.exists():
         log.error("Could not find 'nextflow_schema.json' in current directory. Please specify a path.")
         sys.exit(1)
 
@@ -484,4 +483,4 @@ def pipelines_schema_docs(schema_path, output, format, force, columns):
     # Assume we're in a pipeline dir root if schema path not set
     schema_obj.get_schema_path(schema_path)
     schema_obj.load_schema()
-    schema_obj.print_documentation(output, format, force, columns.split(","))
+    schema_obj.print_documentation(output, output_format, force, columns.split(","))

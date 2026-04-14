@@ -2,7 +2,6 @@
 The ComponentCreate class handles generating of module and subworkflow templates
 """
 
-import glob
 import json
 import logging
 import re
@@ -11,7 +10,6 @@ from pathlib import Path
 
 import jinja2
 import questionary
-import rich
 import rich.prompt
 import ruamel.yaml
 from packaging.version import parse as parse_version
@@ -37,7 +35,7 @@ class ComponentCreate(ComponentCommand):
     def __init__(
         self,
         component_type: str,
-        directory: Path = Path("."),
+        directory: Path = Path(),
         component: str = "",
         author: str | None = None,
         process_label: str | None = None,
@@ -195,7 +193,7 @@ class ComponentCreate(ComponentCommand):
                 if not self.tool_conda_version:
                     version = anaconda_response.get("latest_version")
                     if not version:
-                        version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
+                        version = str(max(parse_version(v) for v in anaconda_response["versions"]))
                 else:
                     version = self.tool_conda_version
 
@@ -399,7 +397,7 @@ class ComponentCreate(ComponentCommand):
                 )
 
             # If no subtool, check that there isn't already a tool/subtool
-            tool_glob = glob.glob(f"{Path(self.directory, self.component_type, self.org, self.component)}/*/main.nf")
+            tool_glob = list(Path(self.directory, self.component_type, self.org, self.component).glob("*/main.nf"))
             if not self.subtool and tool_glob:
                 raise UserWarning(
                     f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.component_name}'"
@@ -423,7 +421,7 @@ class ComponentCreate(ComponentCommand):
         try:
             gh_auth_user = json.loads(subprocess.check_output(["gh", "api", "/user"], stderr=subprocess.DEVNULL))
             author_default = f"@{gh_auth_user['login']}"
-        except Exception as e:
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
             log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
 
         # Regex to valid GitHub username: https://github.com/shinnn/github-username-regex
@@ -543,7 +541,7 @@ class ComponentCreate(ComponentCommand):
 
             if hasattr(self, "outputs") and len(self.outputs) > 0:
                 outputs_dict: dict[str, list | dict] = {}
-                for i, (output_name, ontologies) in enumerate(self.outputs.items()):
+                for _i, (output_name, ontologies) in enumerate(self.outputs.items()):
                     channel_contents: list[list[dict] | dict] = []
                     if self.has_meta:
                         channel_contents.append(

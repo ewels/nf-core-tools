@@ -173,7 +173,7 @@ class ModulesJson:
         if repos is None:
             repos = {}
         # Check if there are any nf-core modules installed
-        if (directory / NF_CORE_MODULES_NAME).exists() and NF_CORE_MODULES_REMOTE not in repos.keys():
+        if (directory / NF_CORE_MODULES_NAME).exists() and NF_CORE_MODULES_REMOTE not in repos:
             repos[NF_CORE_MODULES_REMOTE] = {}
         # The function might rename some directories, keep track of them
         renamed_dirs = {}
@@ -185,7 +185,7 @@ class ModulesJson:
             # Loop until all directories in the base directory are covered by a remote
             self.require_prompts(
                 f"Found untracked directories in '{component_type}'.\n"
-                f"Untracked: {', '.join(str(dir.relative_to(directory)) for dir in dirs_not_covered)}\n"
+                f"Untracked: {', '.join(str(directory.relative_to(directory)) for directory in dirs_not_covered)}\n"
                 "Please configure these directories in your modules.json manually"
             )
             while len(dirs_not_covered) > 0:
@@ -193,7 +193,7 @@ class ModulesJson:
                     "The following director{s} in the {t} directory are untracked: '{l}'".format(
                         s="ies" if len(dirs_not_covered) > 0 else "y",
                         t=component_type,
-                        l="', '".join(str(dir.relative_to(directory)) for dir in dirs_not_covered),
+                        l="', '".join(str(d.relative_to(directory)) for d in dirs_not_covered),
                     )
                 )
                 nrepo_remote = questionary.text(
@@ -266,7 +266,7 @@ class ModulesJson:
             repos_at_level = {Path(*repo.parts[:depth]): len(repo.parts) for repo in repos}
             for directory in fifo:
                 rel_dir = directory.relative_to(components_directory)
-                if rel_dir in repos_at_level.keys():
+                if rel_dir in repos_at_level:
                     # Go the next depth if this directory is not one of the repos
                     if depth < repos_at_level[rel_dir]:
                         temp_queue.extend(directory.iterdir())
@@ -468,6 +468,7 @@ class ModulesJson:
         # Add all modules from modules.json to missing_installation
         missing_installation = copy.deepcopy(self.modules_json["repos"])
         # Obtain the path of all installed modules
+        # TODO: Use Path.parts instead of str().startswith() to avoid unnecessary string conversion
         module_dirs = [
             Path(dir_name).relative_to(self.modules_dir)
             for dir_name, _, file_names in os.walk(self.modules_dir)
@@ -476,6 +477,7 @@ class ModulesJson:
         untracked_dirs_modules, missing_installation = self.parse_dirs(module_dirs, missing_installation, "modules")
 
         # Obtain the path of all installed subworkflows
+        # TODO: Use Path.parts instead of str().startswith() to avoid unnecessary string conversion
         subworkflow_dirs = [
             Path(dir_name).relative_to(self.subworkflows_dir)
             for dir_name, _, file_names in os.walk(self.subworkflows_dir)
@@ -511,12 +513,14 @@ class ModulesJson:
             git_url = ""
 
             for repo in missing_installation:
-                if component_type in missing_installation[repo]:
-                    if install_dir in missing_installation[repo][component_type]:
-                        if component in missing_installation[repo][component_type][install_dir]:
-                            component_in_file = True
-                            git_url = repo
-                            break
+                if (
+                    component_type in missing_installation[repo]
+                    and install_dir in missing_installation[repo][component_type]
+                    and component in missing_installation[repo][component_type][install_dir]
+                ):
+                    component_in_file = True
+                    git_url = repo
+                    break
             if not component_in_file:
                 # If it is not, add it to the list of missing components
                 untracked_dirs.append(component)
@@ -558,12 +562,7 @@ class ModulesJson:
             elif (
                 not isinstance(repo_url, str)
                 or repo_url == ""
-                or not (
-                    repo_url.startswith("http")
-                    or repo_url.startswith("ftp")
-                    or repo_url.startswith("ssh")
-                    or repo_url.startswith("git")
-                )
+                or not repo_url.startswith(("http", "ftp", "ssh", "git"))
                 or not isinstance(repo_entry["modules"], dict)
                 or repo_entry["modules"] == {}
             ):
@@ -637,7 +636,7 @@ class ModulesJson:
             for _, repo_entry in self.modules_json.get("repos", {}).items():
                 for component_type in ["modules", "subworkflows"]:
                     if component_type in repo_entry:
-                        for install_dir, install_dir_entry in repo_entry[component_type].items():
+                        for _install_dir, install_dir_entry in repo_entry[component_type].items():
                             for _, component in install_dir_entry.items():
                                 if "installed_by" in component and isinstance(component["installed_by"], str):
                                     log.debug(f"Updating {component} in modules.json")
@@ -659,12 +658,10 @@ class ModulesJson:
         # we try to reinstall them
         if len(missing_installation) > 0:
             if "subworkflows" in [
-                c_type for _, repo_content in missing_installation.items() for c_type in repo_content.keys()
+                c_type for _, repo_content in missing_installation.items() for c_type in repo_content
             ]:
                 self.resolve_missing_installation(missing_installation, "subworkflows")
-            if "modules" in [
-                c_type for _, repo_content in missing_installation.items() for c_type in repo_content.keys()
-            ]:
+            if "modules" in [c_type for _, repo_content in missing_installation.items() for c_type in repo_content]:
                 self.resolve_missing_installation(missing_installation, "modules")
 
         # If some modules/subworkflows didn't have an entry in the 'modules.json' file
@@ -716,10 +713,10 @@ class ModulesJson:
                 try:
                     self.modules_json = json.load(fh)
                 except json.JSONDecodeError as e:
-                    raise UserWarning(f"Unable to load JSON file '{self.modules_json_path}' due to error {e}")
+                    raise UserWarning(f"Unable to load JSON file '{self.modules_json_path}' due to error {e}") from e
 
-        except FileNotFoundError:
-            raise UserWarning("File 'modules.json' is missing")
+        except FileNotFoundError as e:
+            raise UserWarning("File 'modules.json' is missing") from e
 
     def update(
         self,
@@ -908,7 +905,7 @@ class ModulesJson:
         except LookupError as e:
             raise LookupError(
                 f"Failed to apply patch in reverse for {component_type[:-1]} '{component_fullname}' due to: {e}"
-            )
+            ) from e
 
         # Write the patched files to a temporary directory
         log.debug("Writing patched files to tmpdir")
@@ -1079,17 +1076,19 @@ class ModulesJson:
             assert self.modules_json is not None  # mypy
         component_types = ["modules"] if component_type == "modules" else ["modules", "subworkflows"]
         # Find all components that have an entry of install by of  a given component, recursively call this function for subworkflows
-        for type in component_types:
-            for repo_url in self.modules_json["repos"].keys():
+        for comp_type in component_types:
+            for repo_url in self.modules_json["repos"]:
                 modules_repo = ModulesRepo(repo_url)
                 install_dir = modules_repo.repo_path
                 try:
-                    for comp in self.modules_json["repos"][repo_url][type][install_dir]:
-                        if name in self.modules_json["repos"][repo_url][type][install_dir][comp]["installed_by"]:
-                            dependent_components[comp] = (repo_url, install_dir, type)
+                    for comp in self.modules_json["repos"][repo_url][comp_type][install_dir]:
+                        if name in self.modules_json["repos"][repo_url][comp_type][install_dir][comp]["installed_by"]:
+                            dependent_components[comp] = (repo_url, install_dir, comp_type)
                 except KeyError as e:
                     # This exception will raise when there are only modules installed
-                    log.debug(f"Trying to retrieve all {type}. There aren't {type} installed. Failed with error {e}")
+                    log.debug(
+                        f"Trying to retrieve all {comp_type}. There aren't {comp_type} installed. Failed with error {e}"
+                    )
                     continue
 
         return dependent_components
@@ -1197,7 +1196,7 @@ class ModulesJson:
                     self.modules_json["repos"].pop(repo_url)
 
     def resolve_missing_from_modules_json(self, missing_from_modules_json, component_type):
-        format_missing = [f"'{dir}'" for dir in missing_from_modules_json]
+        format_missing = [f"'{d}'" for d in missing_from_modules_json]
         if len(format_missing) == 1:
             log.info(
                 f"Recomputing commit SHA for {component_type[:-1]} {format_missing[0]} which was missing from 'modules.json'"
@@ -1208,7 +1207,7 @@ class ModulesJson:
             )
         assert self.modules_json is not None  # mypy
         # Get the remotes we are missing
-        tracked_repos = {repo_url: (repo_entry) for repo_url, repo_entry in self.modules_json["repos"].items()}
+        tracked_repos = dict(self.modules_json["repos"].items())
         repos, _ = self.get_pipeline_module_repositories(component_type, self.modules_dir, tracked_repos)
 
         # Get tuples of components that miss installation and their install directory
@@ -1223,10 +1222,11 @@ class ModulesJson:
                         modules_repo.repo_path,
                     )
                     for dir_name, _, _ in os.walk(repo_url_path):
-                        if component_type == "modules":
-                            if len(Path(directory).parts) > 1:  # The module name is TOOL/SUBTOOL
-                                paths_in_directory.append(str(Path(*Path(dir_name).parts[-2:])))
-                                pass
+                        if (
+                            component_type == "modules" and len(Path(directory).parts) > 1
+                        ):  # The module name is TOOL/SUBTOOL
+                            paths_in_directory.append(str(Path(*Path(dir_name).parts[-2:])))
+                            pass
                         paths_in_directory.append(Path(dir_name).parts[-1])
                     if directory in paths_in_directory:
                         yield (modules_repo.repo_path, directory)

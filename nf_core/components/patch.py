@@ -1,5 +1,4 @@
 import logging
-import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -65,7 +64,7 @@ class ComponentPatch(ComponentCommand):
                 choices=sorted(choices),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        component_dir = [dir for dir, m in components if m == component][0]
+        component_dir = [comp_dir for comp_dir, m in components if m == component][0]
         component_fullname = str(Path(self.component_type, self.modules_repo.repo_path, component))
 
         # Verify that the component has an entry in the modules.json file
@@ -106,7 +105,7 @@ class ComponentPatch(ComponentCommand):
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
             if remove:
-                os.remove(patch_path)
+                patch_path.unlink()
             else:
                 return
 
@@ -133,7 +132,9 @@ class ComponentPatch(ComponentCommand):
             )
             log.debug(f"Patch file wrote to a temporary directory {patch_temp_path}")
         except UserWarning:
-            raise UserWarning(f"{self.component_type[:-1]} '{component_fullname}' is unchanged. No patch to compute")
+            raise UserWarning(
+                f"{self.component_type[:-1]} '{component_fullname}' is unchanged. No patch to compute"
+            ) from None
 
         # Write changes to modules.json
         self.modules_json.add_patch_entry(
@@ -177,7 +178,7 @@ class ComponentPatch(ComponentCommand):
                 choices,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        component_dir = [dir for dir, m in components if m == component][0]
+        component_dir = [comp_dir for comp_dir, m in components if m == component][0]
         component_fullname = str(Path(self.component_type, component_dir, component))
 
         # Verify that the component has an entry in the modules.json file
@@ -227,9 +228,9 @@ class ComponentPatch(ComponentCommand):
         try:
             for file in Path(temp_component_dir).glob("*"):
                 file.rename(component_path.joinpath(file.name))
-            os.rmdir(temp_component_dir)
+            Path(temp_component_dir).rmdir()
         except Exception as err:
-            raise UserWarning(f"There was a problem reverting the patched file: {err}")
+            raise UserWarning(f"There was a problem reverting the patched file: {err}") from err
 
         log.info(f"Patch for {component} reverted!")
         # Remove patch file if we could revert the patch

@@ -209,7 +209,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             log.info("Including --release mode tests")
 
         # Check that we recognise all --fix arguments
-        unrecognised_fixes = list(test for test in self.fix if test not in self.lint_tests)
+        unrecognised_fixes = [test for test in self.fix if test not in self.lint_tests]
         if len(unrecognised_fixes):
             raise AssertionError(
                 "Unrecognised lint test{} for '--fix': '{}'".format(
@@ -239,11 +239,11 @@ class PipelineLint(nf_core.utils.Pipeline):
             log.info("Attempting to automatically fix failing tests")
             try:
                 repo = git.Repo(self.wf_path)
-            except InvalidGitRepositoryError:
+            except InvalidGitRepositoryError as e:
                 raise AssertionError(
                     f"'{self.wf_path}' does not appear to be a git repository, "
                     "this is required when running with '--fix'"
-                )
+                ) from e
             # Check that we have no uncommitted changes
             if repo.is_dirty(untracked_files=True):
                 raise AssertionError(
@@ -606,12 +606,8 @@ def run_linting(
             )
         log.info("Only running tests: '{}'".format("', '".join(key)))
 
-    # Check if we were given any keys, and if they match any pipeline tests
-    if key:
-        pipeline_keys = list(set(key).intersection(set(PipelineLint._get_all_lint_tests(release_mode))))
-    else:
-        # If no key is supplied, run all tests
-        pipeline_keys = None
+    # Check if we were given any keys, and if they match any pipeline tests. If no key is supplied, run all tests
+    pipeline_keys = list(set(key).intersection(set(PipelineLint._get_all_lint_tests(release_mode)))) if key else None
 
     # Create the lint object
     lint_obj = PipelineLint(pipeline_dir, release_mode, fix, pipeline_keys, fail_ignored, fail_warned, hide_progress)
@@ -649,8 +645,8 @@ def run_linting(
             )
         else:
             # If no key is supplied, run the default modules tests
-            module_lint_tests = list(("module_changes", "module_version"))
-            subworkflow_lint_tests = list(("subworkflow_changes", "subworkflow_version"))
+            module_lint_tests = ["module_changes", "module_version"]
+            subworkflow_lint_tests = ["subworkflow_changes", "subworkflow_version"]
         module_lint_obj.filter_tests_by_key(module_lint_tests)
         if subworkflow_lint_obj is not None:
             subworkflow_lint_obj.filter_tests_by_key(subworkflow_lint_tests)
@@ -704,7 +700,6 @@ def run_linting(
         lint_obj._save_json_results(json_fn)
 
     # Reminder about --release mode flag if we had failures
-    if len(lint_obj.failed) > 0:
-        if release_mode:
-            log.info("Reminder: Lint tests were run in --release mode.")
+    if len(lint_obj.failed) > 0 and release_mode:
+        log.info("Reminder: Lint tests were run in --release mode.")
     return lint_obj, module_lint_obj, subworkflow_lint_obj
