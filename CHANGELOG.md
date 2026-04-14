@@ -89,6 +89,7 @@
     - [nf-teams](https://github.com/nvnieuwk/nf-teams)
 - Add `.lineage/` directory to the template .gitignore ([#4075](https://github.com/nf-core/tools/pull/4075)).
 - Fix nf-core tools version to what is specified in `.nf-core.yml` for the GitHub workflow `download_pipeline.yml` ([#4124](https://github.com/nf-core/tools/pull/4124)).
+- Trigger full nf-test run if scripts in bin/ or schema JSON files are modified ([#3897](https://github.com/nf-core/tools/pull/3897))
 - Add additional fusion specific exit codes ([#4180](https://github.com/nf-core/tools/pull/4180))
 
 #### Version updates
