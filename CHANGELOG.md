@@ -95,6 +95,7 @@
 - Update all documentation URLs to point to equivalents on the new nf-core website documentation structure ([#4135](https://github.com/nf-core/tools/pull/4135))
 - Trigger full nf-test run if scripts in bin/ or schema JSON files are modified ([#3897](https://github.com/nf-core/tools/pull/3897))
 - Add additional fusion specific exit codes ([#4180](https://github.com/nf-core/tools/pull/4180))
+- fix: rename variables in pipeline nf-test template default.nf.test for clarity ([#4189](https://github.com/nf-core/tools/pull/4189))
 
 #### Version updates
 
