@@ -57,6 +57,10 @@
 - Update example links in main.nf comments ([#4188](https://github.com/nf-core/tools/pull/4188))
 - use prek instead of pre-commit in all instances ([#4187](https://github.com/nf-core/tools/pull/4187))
 
+### Download
+
+- Fix `nf-core pipelines download --platform` output directory structure and tagging ([#4185](https://github.com/nf-core/tools/pull/4185))
+
 ### Linting
 
 - fix failing pytest for lint after samtools topic conversion ([#4026](https://github.com/nf-core/tools/pull/4026))
