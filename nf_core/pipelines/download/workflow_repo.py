@@ -305,9 +305,9 @@ class WorkflowRepo(SyncedRepo):
         if self.repo:
             try:
                 destination = destination.absolute()
-                destfolder = destination.parent
-                if not destfolder.exists():
-                    destfolder.mkdir(parents=True, exist_ok=True)
+                # Ensure the parent of the destination exists
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                # Remove an potentially existing previous clone
                 if destination.exists():
                     shutil.rmtree(destination)
                 self.repo.clone(str(destination), bare=True)
