@@ -53,6 +53,10 @@ class ComponentRemove(ComponentCommand):
         if repo_url is None:
             repo_url = self.modules_repo.remote_url
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument"
+            )
             component = questionary.autocomplete(
                 f"{self.component_type[:-1]} name:",
                 choices=self.components_from_repo(repo_path),
@@ -130,6 +134,10 @@ class ComponentRemove(ComponentCommand):
                     )
                 # ask the user if they still want to remove the component, add it back otherwise
                 if not force:
+                    self.require_prompts(
+                        f"{self.component_type[:-1].title()} '{component}' is still included in workflow files.\n"
+                        "Use '--force' to force removal"
+                    )
                     if not questionary.confirm(
                         f"Do you still want to remove the {self.component_type[:-1]} '{component}'?",
                         style=nf_core.utils.nfcore_question_style,
@@ -144,11 +152,7 @@ class ComponentRemove(ComponentCommand):
                         removed_components.append(component)
                         return removed
             # Remove the component files of all entries removed from modules.json
-            removed = (
-                True
-                if self.clear_component_dir(component, Path(self.directory, removed_component_dir)) or removed
-                else False
-            )
+            removed = bool(self.clear_component_dir(component, Path(self.directory, removed_component_dir)) or removed)
             removed_components.append(component)
 
         # Prettify modules.json file after all changes have been made

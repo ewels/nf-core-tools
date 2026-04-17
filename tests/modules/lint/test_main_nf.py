@@ -149,9 +149,8 @@ class TestMainNfLinting(TestModules):
             directory=self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_NFTEST_BRANCH
         )
         module_lint.lint(print_results=False, module="fastqc")
-        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
-        assert any(w.lint_test in ("main_nf_version_emit", "main_nf_version_topic") for w in module_lint.warned), (
-            f"Expected warning about missing version topic, got {[w.message for w in module_lint.warned]}"
+        assert any(f.lint_test in ("main_nf_version_emit", "main_nf_version_topic") for f in module_lint.failed), (
+            f"Expected failure about missing version topic, got {[f.message for f in module_lint.failed]}"
         )
         assert len(module_lint.passed) > 0
 
@@ -426,13 +425,13 @@ process TEST_PROCESS {
 
     # Check that the path pattern doesn't include "hidden: true"
     path_key = list(prof_output[0][1].keys())[0]
-    assert '"*.{prof,pidx}*"' == path_key, f"Expected '\"*.{{prof,pidx}}*\"', got '{path_key}'"
+    assert path_key == '"*.{prof,pidx}*"', f"Expected '\"*.{{prof,pidx}}*\"', got '{path_key}'"
     assert "hidden" not in path_key, f"Pattern should not contain 'hidden': {path_key}"
 
     # Check the data output also doesn't include "hidden: true"
     data_output = component.outputs["data"]
     data_path_key = list(data_output[0].keys())[0]
-    assert '"data.csv"' == data_path_key, f"Expected '\"data.csv\"', got '{data_path_key}'"
+    assert data_path_key == '"data.csv"', f"Expected '\"data.csv\"', got '{data_path_key}'"
     assert "hidden" not in data_path_key, f"Pattern should not contain 'hidden': {data_path_key}"
 
 

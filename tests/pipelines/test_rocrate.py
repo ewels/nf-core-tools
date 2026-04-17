@@ -11,10 +11,7 @@ import git
 import rocrate.rocrate
 from git import Repo
 
-import nf_core.pipelines.create
-import nf_core.pipelines.create.create
 import nf_core.pipelines.rocrate
-import nf_core.utils
 from nf_core.pipelines.bump_version import bump_pipeline_version
 
 from ..test_pipelines import TestPipelines
@@ -132,7 +129,6 @@ class TestROCrate(TestPipelines):
         """Run the nf-core rocrate command"""
 
         # Run the command
-        self.rocrate_obj
         assert self.rocrate_obj.create_rocrate(self.pipeline_dir, self.pipeline_dir)
 
         # Check that the crate was created

@@ -1,5 +1,4 @@
 import logging
-import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -52,6 +51,10 @@ class ComponentPatch(ComponentCommand):
         components = self.modules_json.get_all_components(self.component_type).get(self.modules_repo.remote_url)
 
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument"
+            )
             choices = [
                 component if directory == self.modules_repo.repo_path else f"{directory}/{component}"
                 for directory, component in components
@@ -61,7 +64,7 @@ class ComponentPatch(ComponentCommand):
                 choices=sorted(choices),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        component_dir = [dir for dir, m in components if m == component][0]
+        component_dir = [comp_dir for comp_dir, m in components if m == component][0]
         component_fullname = str(Path(self.component_type, self.modules_repo.repo_path, component))
 
         # Verify that the component has an entry in the modules.json file
@@ -94,12 +97,15 @@ class ComponentPatch(ComponentCommand):
         patch_path = Path(self.directory, patch_relpath)
 
         if patch_path.exists():
+            self.require_prompts(
+                f"Patch already exists for '{component_fullname}'.\nPlease remove the existing patch file first"
+            )
             remove = questionary.confirm(
                 f"Patch exists for {self.component_type[:-1]} '{component_fullname}'. Do you want to regenerate it?",
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
             if remove:
-                os.remove(patch_path)
+                patch_path.unlink()
             else:
                 return
 
@@ -126,7 +132,9 @@ class ComponentPatch(ComponentCommand):
             )
             log.debug(f"Patch file wrote to a temporary directory {patch_temp_path}")
         except UserWarning:
-            raise UserWarning(f"{self.component_type[:-1]} '{component_fullname}' is unchanged. No patch to compute")
+            raise UserWarning(
+                f"{self.component_type[:-1]} '{component_fullname}' is unchanged. No patch to compute"
+            ) from None
 
         # Write changes to modules.json
         self.modules_json.add_patch_entry(
@@ -157,6 +165,10 @@ class ComponentPatch(ComponentCommand):
         components = self.modules_json.get_all_components(self.component_type).get(self.modules_repo.remote_url)
 
         if component is None:
+            self.require_prompts(
+                f"No {self.component_type[:-1]} name provided.\n"
+                f"Please provide the {self.component_type[:-1]} name as a command-line argument"
+            )
             choices = [
                 component if directory == self.modules_repo.repo_path else f"{directory}/{component}"
                 for directory, component in components
@@ -166,7 +178,7 @@ class ComponentPatch(ComponentCommand):
                 choices,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        component_dir = [dir for dir, m in components if m == component][0]
+        component_dir = [comp_dir for comp_dir, m in components if m == component][0]
         component_fullname = str(Path(self.component_type, component_dir, component))
 
         # Verify that the component has an entry in the modules.json file
@@ -199,6 +211,9 @@ class ComponentPatch(ComponentCommand):
         component_path = Path(self.directory, component_relpath)
 
         if patch_path.exists():
+            self.require_prompts(
+                f"Patch exists for '{component_fullname}'.\nPlease remove the existing patch file first"
+            )
             remove = questionary.confirm(
                 f"Patch exists for {self.component_type[:-1]} '{component_fullname}'. Are you sure you want to remove?",
                 style=nf_core.utils.nfcore_question_style,
@@ -213,9 +228,9 @@ class ComponentPatch(ComponentCommand):
         try:
             for file in Path(temp_component_dir).glob("*"):
                 file.rename(component_path.joinpath(file.name))
-            os.rmdir(temp_component_dir)
+            Path(temp_component_dir).rmdir()
         except Exception as err:
-            raise UserWarning(f"There was a problem reverting the patched file: {err}")
+            raise UserWarning(f"There was a problem reverting the patched file: {err}") from err
 
         log.info(f"Patch for {component} reverted!")
         # Remove patch file if we could revert the patch
