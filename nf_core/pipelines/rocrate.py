@@ -285,21 +285,16 @@ class ROCrate:
             log.debug(f"Adding author: {author}")
 
             properties = {
-                "name": author["name"],
+                k: v
+                for k, v in {
+                    "name": author["name"],
+                    "affiliation": author.get("affiliation"),
+                    "url": author.get("github"),
+                    "email": author.get("email")
+                    or (self.pipeline_obj.repo and self._get_git_email_for_name(author["name"])),
+                }.items()
+                if v
             }
-            if "affiliation" in author:
-                properties["affiliation"] = author["affiliation"]
-            if "github" in author:
-                properties["url"] = author["github"]
-
-            if "email" in author:
-                properties["email"] = author["email"]
-            else:
-                # When missing, fill in the email from the git history (if available)
-                if self.pipeline_obj.repo:
-                    email = self._get_git_email_for_name(author["name"])
-                    if email:
-                        properties["email"] = email
 
             author_id = self._get_author_identifier(author)
             author_entity = self.crate.add(Person(self.crate, author_id, properties=properties))
