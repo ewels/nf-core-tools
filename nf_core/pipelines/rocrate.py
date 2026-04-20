@@ -299,14 +299,10 @@ class ROCrate:
                 wf_file.append_to(mode, author_entity)
 
     def _get_author_identifier(self, author: dict) -> str | None:
-        orcid = author.get("orcid") or get_orcid(author["name"])
-        if orcid:
+        if orcid := author.get("orcid") or get_orcid(author["name"]):
             return orcid
-
-        email = author.get("email")
-        if email:
+        if email := author.get("email"):
             return f"#{email}"
-
         return None
 
     def _get_git_email_for_name(self, name: str) -> str:
