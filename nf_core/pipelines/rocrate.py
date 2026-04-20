@@ -396,6 +396,7 @@ class ROCrate:
     def parse_manifest_contributors(self) -> list:
         field_names = ["name", "affiliation", "github", "contribution", "orcid", "email"]
         # Grab the contributor list and convert to JSON
+        # TODO: can be removed once we switch to `nextflow config -o json`
         contributors_str = self.pipeline_obj.nf_config["manifest.contributors"]
         log.debug(f"manifest.contributors: {contributors_str}")
         # JSON uses double quotes, not single quotes
