@@ -22,6 +22,14 @@ from nf_core.utils import Pipeline
 log = logging.getLogger(__name__)
 
 
+# To identify bots, we look for names that contain "[bot]" or end with "-bot" or "_bot", case-insensitive
+BOT_PATTERNS = re.compile(r"\[bot\]|(-bot|_bot)$", re.IGNORECASE)
+
+
+def _is_bot(name: str) -> bool:
+    return bool(BOT_PATTERNS.search(name))
+
+
 class CustomNextflowCrateBuilder(NextflowCrateBuilder):
     DATA_ENTITIES = NextflowCrateBuilder.DATA_ENTITIES + [
         ("docs/usage.md", "File", "Usage documentation"),
@@ -356,7 +364,7 @@ class ROCrate:
             for commit in commits_touching_path:
                 name = commit.author.name
                 # exclude bots
-                if name and not name.endswith("bot") and name != "Travis CI User":
+                if name and not _is_bot(name) and name != "Travis CI User":
                     git_contributors.add(name)
         else:
             log.debug("Could not find git contributors")
