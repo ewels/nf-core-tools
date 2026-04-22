@@ -1,13 +1,36 @@
 name: Test with Nextflow from source
 
 on:
-  workflow_dispatch: # Manual trigger
+  workflow_dispatch:
   schedule:
     # Run at 00:00 UTC on Monday, Wednesday, Friday (2:00 CEST)
     - cron: "0 0 * * 1,3,5"
 
 jobs:
+  check-for-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      cache-hit: ${{ steps.cache-check.outputs.cache-hit }}
+      nxf-sha: ${{ steps.nxf-sha.outputs.sha }}
+    steps:
+      - name: Get latest Nextflow commit SHA
+        id: nxf-sha
+        run: |
+          NXF_SHA=$(git ls-remote https://github.com/nextflow-io/nextflow.git HEAD | cut -f1)
+          echo "sha=$NXF_SHA" >> "$GITHUB_OUTPUT"
+          echo "Latest Nextflow SHA: $NXF_SHA"
+
+      - name: Check if already tested
+        id: cache-check
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: /tmp/nextflow-tested-marker
+          key: nextflow-tested-${{ steps.nxf-sha.outputs.sha }}
+          lookup-only: true
+
   test-with-nextflow-source:
+    needs: check-for-changes
+    if: needs.check-for-changes.outputs.cache-hit != 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       NXF_ANSI_LOG: false
@@ -19,13 +42,12 @@ jobs:
           repository: nextflow-io/nextflow
           path: nextflow
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        name: Check out nf-core/tools
+      - name: Check out nf-core/tools
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           ref: dev
           path: nf-core-tools
 
-      # Set up nf-core/tools
       - name: Set up Python 3.14
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
@@ -66,6 +88,17 @@ jobs:
 
       - name: Run new pipeline
         run: nextflow run nf-core-testpipeline -profile docker,test --outdir ./results
+
+      - name: Mark SHA as tested
+        if: success()
+        run: mkdir -p /tmp/nextflow-tested-marker && touch /tmp/nextflow-tested-marker/.done
+
+      - name: Save tested marker to cache
+        if: success()
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: /tmp/nextflow-tested-marker
+          key: nextflow-tested-${{ needs.check-for-changes.outputs.nxf-sha }}
 
       - name: Send email on failure
         if: failure()
