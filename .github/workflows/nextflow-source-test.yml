@@ -30,7 +30,8 @@ jobs:
 
   test-with-nextflow-source:
     needs: check-for-changes
-    if: needs.check-for-changes.outputs.cache-hit != 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.check-for-changes.outputs.cache-hit != 'true' || github.event_name ==
+      'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       NXF_ANSI_LOG: false
@@ -77,21 +78,25 @@ jobs:
           nextflow -version
 
       - name: Install nf-core/tools
-        run: uv sync --project nf-core-tools
+        working-directory: nf-core-tools
+        run: uv sync
 
       - name: Create new pipeline
+        working-directory: nf-core-tools
         run: >
-          uv run --project nf-core-tools nf-core pipelines create
+          uv run nf-core pipelines create
             -n testpipeline
             -d "This pipeline is for testing"
             -a "Testing McTestface"
+            --outdir ${{ github.workspace }}/nf-core-testpipeline
 
       - name: Run new pipeline
-        run: nextflow run nf-core-testpipeline -profile docker,test --outdir ./results
+        run: nextflow run ./nf-core-testpipeline -profile docker,test --outdir ./results
 
       - name: Mark SHA as tested
         if: success()
-        run: mkdir -p /tmp/nextflow-tested-marker && touch /tmp/nextflow-tested-marker/.done
+        run: mkdir -p /tmp/nextflow-tested-marker && touch
+          /tmp/nextflow-tested-marker/.done
 
       - name: Save tested marker to cache
         if: success()
