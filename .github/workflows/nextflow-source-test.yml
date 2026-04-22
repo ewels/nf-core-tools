@@ -22,7 +22,7 @@ jobs:
 
       - name: Check if already tested
         id: cache-check
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: /tmp/nextflow-tested-marker
           key: nextflow-tested-${{ steps.nxf-sha.outputs.sha }}
@@ -100,7 +100,7 @@ jobs:
 
       - name: Save tested marker to cache
         if: success()
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: /tmp/nextflow-tested-marker
           key: nextflow-tested-${{ needs.check-for-changes.outputs.nxf-sha }}
