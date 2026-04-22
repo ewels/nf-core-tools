@@ -55,11 +55,9 @@ jobs:
           nextflow -version
 
       - name: Install nf-core/tools
-        working-directory: nf-core-tools
         run: uv sync --project nf-core-tools
 
       - name: Create new pipeline
-        working-directory: nf-core-tools
         run: >
           uv run --project nf-core-tools nf-core pipelines create
             -n testpipeline
