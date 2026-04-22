@@ -60,7 +60,11 @@ jobs:
           uv sync --all-extras
 
       - name: Create new pipeline
-        run: uv run nf-core pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+        run: >
+          uv run --project nf-core-tools nf-core pipelines create
+            -n testpipeline
+            -d "This pipeline is for testing"
+            -a "Testing McTestface"
 
       - name: Run new pipeline
         run: nextflow run nf-core-testpipeline -profile docker,test --outdir ./results
