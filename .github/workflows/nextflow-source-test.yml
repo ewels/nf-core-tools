@@ -55,16 +55,17 @@ jobs:
           nextflow -version
 
       - name: Install nf-core/tools
-        run: |
-          cd nf-core-tools
-          uv sync --all-extras
+        working-directory: nf-core-tools
+        run: uv sync --all-extras
 
       - name: Create new pipeline
+        working-directory: nf-core-tools
         run: >
-          uv run --project nf-core-tools nf-core pipelines create
+          uv run nf-core pipelines create
             -n testpipeline
             -d "This pipeline is for testing"
             -a "Testing McTestface"
+            --outdir ${{ github.workspace }}/nf-core-testpipeline
 
       - name: Run new pipeline
         run: nextflow run nf-core-testpipeline -profile docker,test --outdir ./results
